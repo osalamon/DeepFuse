@@ -1,0 +1,261 @@
+   Anaconda3/2023.07-2                              Perl-bundle-CPAN/5.38.0-GCCcore-13.2.0           Python/3.11.3-GCCcore-12.3.0                        Tcl/8.6.12-GCCcore-11.3.0
+   Anaconda3/2024.02-1 
+
+\
+Root: /media/osalamon/tosh1halfTB/OPENsalam/karolina/mnt/proj1/eu-25-40/innovaite/synchronized_data
+==========================================================
+  -- BF-C2DL-MuSC/
+      -- CALT-US/ [OK: 1376 tifs]
+      -- david-challenge/ [ERROR: No 01_RES folder]
+      -- KIT-Sch-GE/ [OK: 1376 tifs]
+      -- KTH-SE (3)/ [OK: 1376 tifs]
+      -- MU-Lux-CZ/ [OK: 1376 tifs]
+      [SUMMARY BF-C2DL-MuSC]
+        > Raters found: 5
+        > GT Files:     100 Total  01_GT(50) 02_GT(50)
+        > Consistency:  FAILED (File counts differ between raters!)
+
+  -- DIC-C2DH-HeLa/
+      -- BGU-IL (2)/ [OK: 84 tifs]
+      -- BGU-IL (4)/ [OK: 84 tifs]
+      -- BGU-IL (5)/ [OK: 84 tifs]
+      -- CALT-US/ [OK: 84 tifs]
+      -- CVUT-CZ/ [OK: 84 tifs]
+      -- FR-Fa-GE/ [OK: 84 tifs]
+      -- FR-Ro-GE/ [OK: 84 tifs]
+      -- KTH-SE (4)/ [OK: 84 tifs]
+      -- MU-Lux-CZ/ [OK: 84 tifs]
+      -- TUG-AT/ [OK: 84 tifs]
+      -- UVA-NL/ [OK: 84 tifs]
+      [SUMMARY DIC-C2DH-HeLa]
+        > Raters found: 11
+        > GT Files:     18 Total  01_GT(9) 02_GT(9)
+        > Consistency:  PASSED (All raters have 84 files)
+
+  -- Fluo-C2DL-MSC/
+      -- BGU-IL (5)/ [OK: 48 tifs]
+      -- BGU-IL-5/ [OK: 48 tifs]
+      -- CVUT-CZ/ [OK: 48 tifs]
+      -- DREX-US/ [OK: 48 tifs]
+      -- FR-Ro-GE/ [OK: 48 tifs]
+      -- KTH-SE (1)/ [OK: 48 tifs]
+      -- MU-Akb-CZ/ [OK: 48 tifs]
+      -- MU-US/ [OK: 48 tifs]
+      -- NOTT-UK/ [OK: 48 tifs]
+      -- SZU-CN/ [OK: 48 tifs]
+      -- TUG-AT/ [OK: 48 tifs]
+      -- UZH-CH/ [OK: 48 tifs]
+      [SUMMARY Fluo-C2DL-MSC]
+        > Raters found: 12
+        > GT Files:     51 Total  01_GT(18) 02_GT(33)
+        > Consistency:  PASSED (All raters have 48 files)
+
+  -- Fluo-C3DH-A549/
+      -- BGU-IL (5)/ [OK: 30 tifs]
+      -- DKFZ-GE/ [OK: 30 tifs]
+      -- HD-Wol-GE/ [OK: 30 tifs]
+      -- KTH-SE (1)/ [OK: 30 tifs]
+      -- LEID-NL/ [OK: 30 tifs]
+      -- MU-US/ [OK: 30 tifs]
+      -- WARW-UK/ [OK: 30 tifs]
+      [SUMMARY Fluo-C3DH-A549]
+        > Raters found: 7
+        > GT Files:     30 Total  01_GT(15) 02_GT(15)
+        > Consistency:  PASSED (All raters have 30 files)
+
+  -- Fluo-C3DH-A549-SIM/
+      -- BGU-IL (5)/ [OK: 30 tifs]
+      -- DKFZ-GE/ [OK: 30 tifs]
+      -- HD-Wol-GE/ [OK: 30 tifs]
+      -- KTH-SE (1)/ [OK: 30 tifs]
+      -- LEID-NL/ [OK: 30 tifs]
+      -- MU-US/ [OK: 30 tifs]
+      -- WARW-UK/ [OK: 30 tifs]
+      [SUMMARY Fluo-C3DH-A549-SIM]
+        > Raters found: 7
+        > GT Files:     60 Total  01_GT(30) 02_GT(30)
+        > Consistency:  PASSED (All raters have 30 files)
+
+  -- Fluo-C3DH-H157/
+      -- BGU-IL (5)/ [OK: 60 tifs]
+      -- CUNI-CZ/ [OK: 60 tifs]
+      -- HD-Har-GE/ [OK: 60 tifs]
+      -- HD-Wol-GE/ [OK: 60 tifs]
+      -- KTH-SE (1)/ [OK: 60 tifs]
+      -- LEID-NL/ [OK: 60 tifs]
+      [SUMMARY Fluo-C3DH-H157]
+        > Raters found: 6
+        > GT Files:     0 (No GT/SEG found)
+        > Consistency:  PASSED (All raters have 60 files)
+
+  -- Fluo-C3DL-MDA231/
+      -- BGU-IL (5)/ [OK: 12 tifs]
+      -- COM-US/ [OK: 12 tifs]
+      -- HD-Wol-GE/ [OK: 12 tifs]
+      -- IMCB-SG (2)/ [OK: 12 tifs]
+      -- KIT-Sch-GE/ [OK: 12 tifs]
+      -- KTH-SE (1)/ [OK: 12 tifs]
+      -- LEID-NL/ [OK: 12 tifs]
+      [SUMMARY Fluo-C3DL-MDA231]
+        > Raters found: 7
+        > GT Files:     0 (No GT/SEG found)
+        > Consistency:  PASSED (All raters have 12 files)
+
+  -- Fluo-N2DH-GOWT1/
+      -- BGU-IL (2)/ [OK: 92 tifs]
+      -- BGU-IL (4)/ [OK: 92 tifs]
+      -- BGU-IL (5)/ [OK: 92 tifs]
+      -- CUNI-CZ/ [OK: 92 tifs]
+      -- CVUT-CZ/ [OK: 92 tifs]
+      -- DREX-US/ [OK: 92 tifs]
+      -- KIT-GE/ [OK: 92 tifs]
+      -- KIT-Sch-GE/ [OK: 92 tifs]
+      -- KTH-SE (1)/ [OK: 92 tifs]
+      -- LEID-NL/ [OK: 92 tifs]
+      -- MU-Akb-CZ/ [OK: 92 tifs]
+      -- MU-US/ [OK: 92 tifs]
+      -- RWTH-GE (1)/ [OK: 92 tifs]
+      -- SZU-CN/ [OK: 92 tifs]
+      -- TUG-AT/ [OK: 92 tifs]
+      -- UP-PT/ [OK: 92 tifs]
+      [SUMMARY Fluo-N2DH-GOWT1]
+        > Raters found: 16
+        > GT Files:     50 Total  01_GT(30) 02_GT(20)
+        > Consistency:  PASSED (All raters have 92 files)
+
+  -- Fluo-N2DH-SIM+/
+      -- BGU-IL (2)/ [OK: 65 tifs]
+      -- BGU-IL (3)/ [OK: 65 tifs]
+      -- BGU-IL (4)/ [OK: 65 tifs]
+      -- BGU-IL (5)/ [OK: 65 tifs]
+      -- CVUT-CZ/ [OK: 65 tifs]
+      -- DKFZ-GE/ [OK: 65 tifs]
+      -- FR-Ro-GE/ [OK: 65 tifs]
+      -- HIT-CN/ [OK: 65 tifs]
+      -- KIT-Sch-GE/ [OK: 65 tifs]
+      -- KTH-SE (1)/ [OK: 65 tifs]
+      -- LEID-NL/ [OK: 65 tifs]
+      -- MU-Lux-CZ/ [OK: 65 tifs]
+      -- PAST-FR/ [OK: 65 tifs]
+      -- SZU-CN/ [OK: 65 tifs]
+      -- TUG-AT/ [OK: 65 tifs]
+      -- UVA-NL/ [OK: 65 tifs]
+      [SUMMARY Fluo-N2DH-SIM+]
+        > Raters found: 16
+        > GT Files:     215 Total  01_GT(65) 02_GT(150)
+        > Consistency:  PASSED (All raters have 65 files)
+
+  -- Fluo-N2DL-HeLa/
+      -- BGU-IL (2)/ [OK: 92 tifs]
+      -- BGU-IL-2/ [OK: 92 tifs]
+      -- BGU-IL (3)/ [OK: 92 tifs]
+      -- BGU-IL-3/ [OK: 92 tifs]
+      -- BGU-IL (4)/ [OK: 92 tifs]
+      -- BGU-IL (5)/ [OK: 92 tifs]
+      -- BGU-IL-5/ [OK: 92 tifs]
+      -- CVUT-CZ/ [OK: 92 tifs]
+      -- FR-Fa-GE/ [OK: 92 tifs]
+      -- FR-Ro-GE/ [OK: 92 tifs]
+      -- HD-Har-GE/ [OK: 92 tifs]
+      -- HD-Hau-GE/ [OK: 92 tifs]
+      -- HIT-CN/ [OK: 92 tifs]
+      -- KIT-Sch-GE/ [OK: 92 tifs]
+      -- KTH-SE (1)/ [OK: 92 tifs]
+      -- RWTH-GE (1)/ [OK: 92 tifs]
+      -- SZU-CN/ [OK: 92 tifs]
+      -- TUG-AT/ [OK: 92 tifs]
+      -- UZH-CH/ [OK: 92 tifs]
+      [SUMMARY Fluo-N2DL-HeLa]
+        > Raters found: 19
+        > GT Files:     36 Total  01_GT(28) 02_GT(8)
+        > Consistency:  PASSED (All raters have 92 files)
+
+  -- Fluo-N3DH-CE/
+      -- BGU-IL (5)/ [OK: 7 tifs]
+      -- HD-Har-GE/ [OK: 7 tifs]
+      -- KIT-Sch-GE/ [WARNING: 195 tifs (Mismatch!)]
+      -- KTH-SE (1)/ [WARNING: 195 tifs (Mismatch!)]
+      -- MPI-GE/ [WARNING: 195 tifs (Mismatch!)]
+      -- OX-UK/ [WARNING: 195 tifs (Mismatch!)]
+      -- RWTH-GE (2)/ [WARNING: 195 tifs (Mismatch!)]
+      -- UCSB-US/ [WARNING: 195 tifs (Mismatch!)]
+      [SUMMARY Fluo-N3DH-CE]
+        > Raters found: 8
+        > GT Files:     0 (No GT/SEG found)
+        > Consistency:  FAILED (File counts differ between raters!)
+
+  -- Fluo-N3DH-CHO/
+      -- BGU-IL (5)/ [OK: 92 tifs]
+      -- COM-US/ [OK: 92 tifs]
+      -- CUL-UK/ [OK: 92 tifs]
+      -- CUNI-CZ/ [OK: 92 tifs]
+      -- DREX-US/ [OK: 92 tifs]
+      -- HD-Har-GE/ [OK: 92 tifs]
+      -- IMCB-SG (2)/ [OK: 92 tifs]
+      -- KIT-GE/ [OK: 92 tifs]
+      -- KIT-Sch-GE/ [OK: 92 tifs]
+      -- KTH-SE (1)/ [OK: 92 tifs]
+      -- LEID-NL/ [OK: 92 tifs]
+      -- MU-CZ/ [OK: 92 tifs]
+      -- NOTT-UK/ [OK: 92 tifs]
+      -- OX-UK/ [OK: 92 tifs]
+      -- UP-PT/ [OK: 92 tifs]
+      [SUMMARY Fluo-N3DH-CHO]
+        > Raters found: 15
+        > GT Files:     0 (No GT/SEG found)
+        > Consistency:  PASSED (All raters have 92 files)
+
+  -- Fluo-N3DH-SIM+/
+      -- BGU-IL (5)/ [OK: 150 tifs]
+      -- DKFZ-GE/ [OK: 150 tifs]
+      -- KIT-Sch-GE/ [OK: 150 tifs]
+      -- KTH-SE (1)/ [OK: 150 tifs]
+      -- LEID-NL/ [OK: 150 tifs]
+      [SUMMARY Fluo-N3DH-SIM+]
+        > Raters found: 5
+        > GT Files:     230 Total  01_GT(150) 02_GT(80)
+        > Consistency:  PASSED (All raters have 150 files)
+
+  -- PhC-C2DH-U373/
+      -- BGU-IL (3)/ [OK: 115 tifs]
+      -- BGU-IL (4)/ [OK: 115 tifs]
+      -- BGU-IL (5)/ [OK: 115 tifs]
+      -- CALT-US/ [OK: 115 tifs]
+      -- CVUT-CZ/ [OK: 115 tifs]
+      -- DREX-US/ [OK: 115 tifs]
+      -- FR-Be-GE/ [OK: 115 tifs]
+      -- FR-Fa-GE/ [OK: 115 tifs]
+      -- FR-Ro-GE/ [OK: 115 tifs]
+      -- HD-Wol-GE/ [OK: 115 tifs]
+      -- HIT-CN/ [OK: 115 tifs]
+      -- KTH-SE (3)/ [OK: 115 tifs]
+      -- ND-US/ [OK: 115 tifs]
+      -- SZU-CN/ [OK: 115 tifs]
+      -- TUG-AT/ [OK: 115 tifs]
+      [SUMMARY PhC-C2DH-U373]
+        > Raters found: 15
+        > GT Files:     34 Total  01_GT(15) 02_GT(19)
+        > Consistency:  PASSED (All raters have 115 files)
+
+  -- PhC-C2DL-PSC/
+      -- BGU-IL (2)/ [OK: 300 tifs]
+      -- BGU-IL (3)/ [OK: 300 tifs]
+      -- BGU-IL (5)/ [OK: 300 tifs]
+      -- CVUT-CZ/ [OK: 300 tifs]
+      -- DREX-US/ [OK: 300 tifs]
+      -- FR-Be-GE/ [OK: 300 tifs]
+      -- FR-Fa-GE/ [OK: 300 tifs]
+      -- FR-Ro-GE/ [OK: 300 tifs]
+      -- HD-Hau-GE/ [OK: 300 tifs]
+      -- HIT-CN/ [OK: 300 tifs]
+      -- KTH-SE (1)/ [OK: 300 tifs]
+      -- MU-Lux-CZ/ [OK: 300 tifs]
+      -- MU-US/ [WARNING: 8 tifs (Mismatch!)]
+      -- PURD-US/ [OK: 300 tifs]
+      -- SZU-CN/ [WARNING: 34 tifs (Mismatch!)]
+      -- UVA-NL/ [OK: 300 tifs]
+      [SUMMARY PhC-C2DL-PSC]
+        > Raters found: 16
+        > GT Files:     4 Total  01_GT(2) 02_GT(2)
+        > Consistency:  FAILED (File counts differ between raters!)
+
