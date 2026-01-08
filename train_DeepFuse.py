@@ -142,7 +142,7 @@ output = Conv2D(1, (1,1), activation='sigmoid')(merged)
 # our model will accept the inputs of 16 branches and then output a single value
 # model = Model(inputs=[x1.input, x2.input, x3.input, x4.input, x5.input, x6.input, x7.input, x8.input, x9.input, x10.input, x11.input, x12.input, x13.input, x14.input, x15.input, x16.input], outputs=z)
 # model = Model(inputs=[x1.input, x2.input, x3.input, x4.input], outputs=z)
-model = Model(inputs=[in1, in2, in3, in4], outputs=[output])
+model = Model(inputs=[input1, input2, input3, input4], outputs=[output])
 
 model.compile(loss=dice_coef_loss, optimizer=Adam(lr=learning_rate), metrics=[dice_coef])
 model.summary()

@@ -29,6 +29,7 @@ def create_train_data(input_path, gt_path):
             participant_image_name = 'mask' + image_name.split('man_seg')[1][:3] + '.tif'
             im_gt = tiff.imread(os.path.join(gt_path, image_name))
             im_allmasks = tiff.imread(os.path.join(input_path, participant_image_name))
+            # mask_im = np.zeros((im_allmasks.shape[0], im_allmasks.shape[1]), dtype='float32')
             mask_im = np.zeros((im_allmasks.shape[0], im_allmasks.shape[1]), dtype='float32')
             cur_label = np.unique(im_gt)[-1]
             mask_im[im_allmasks == cur_label] = 1.0	# to produce a binary image for each label since DeepFuse is a 2-class classifier
