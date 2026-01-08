@@ -20,7 +20,7 @@ def create_train_data(input_path, gt_path):
         raise ValueError(f"No .tif files found in {gt_path}")
 
     # 2. Dynamically allocate memory based on what you actually have
-    mask_imgs = np.zeros((num_files, 1070, 1036))
+    mask_imgs = np.zeros((num_files, 1070, 1036), dtype='float32')
 
     ii = 0
     print('Loading masks from ', input_path)
@@ -29,7 +29,7 @@ def create_train_data(input_path, gt_path):
             participant_image_name = 'mask' + image_name.split('man_seg')[1][:3] + '.tif'
             im_gt = tiff.imread(os.path.join(gt_path, image_name))
             im_allmasks = tiff.imread(os.path.join(input_path, participant_image_name))
-            mask_im = np.zeros((im_allmasks.shape[0], im_allmasks.shape[1]), dtype='double')
+            mask_im = np.zeros((im_allmasks.shape[0], im_allmasks.shape[1]), dtype='float32')
             cur_label = np.unique(im_gt)[-1]
             mask_im[im_allmasks == cur_label] = 1.0	# to produce a binary image for each label since DeepFuse is a 2-class classifier
             mask_imgs[ii, :, :] = mask_im
@@ -56,10 +56,8 @@ def create_gt_data(gt_path):
         raise ValueError(f"No .tif files found in {gt_path}")
 
     # 2. Dynamically allocate memory based on what you actually have
-    mask_imgs = np.zeros((num_files, 1070, 1036))
     
-    
-    gt_mask_imgs = np.zeros((num_files, 1070, 1036))
+    gt_mask_imgs = np.zeros((num_files, 1070, 1036), dtype='float32')
     ii = 0
     for image_name in os.listdir(gt_path):  # Go through all the .tif files in the folder
         if image_name.endswith(".tif"):
