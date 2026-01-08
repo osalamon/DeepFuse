@@ -26,7 +26,13 @@ def create_train_data(input_path, gt_path):
     print('Loading masks from ', input_path)
     for image_name in os.listdir(gt_path):  # Go through all the .tif files in the folder
         if image_name.endswith(".tif"):
-            participant_image_name = 'mask' + image_name.split('man_seg')[1][:3] + '.tif'
+            # Extract the number safely (removes '.tif' first so we don't accidentally slice it)
+            # This handles 'man_seg090.tif' -> '090' OR 'man_seg1000.tif' -> '1000'
+            image_id = image_name.split('man_seg')[1].split('.')[0]
+            # Construct the filename. 
+            # I need 4 digits, i.e. 'mask0090.tif', use .zfill(4)
+            participant_image_name = 'mask' + image_id.zfill(4) + '.tif'
+            # participant_image_name = 'mask' + image_name.split('man_seg')[1][:3] + '.tif'
             im_gt = tiff.imread(os.path.join(gt_path, image_name))
             im_allmasks = tiff.imread(os.path.join(input_path, participant_image_name))
             # mask_im = np.zeros((im_allmasks.shape[0], im_allmasks.shape[1]), dtype='float32')
