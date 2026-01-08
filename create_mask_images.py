@@ -10,6 +10,16 @@ def create_train_data(input_path, gt_path):
 	# first dimension is the number of available GT single-mask images (Gold segmentation annotations)
 	# if mask images contain multiple masks, they should be split into single-mask images beforehand.
 	# second&third dim. is the dimension of input images
+    valid_files = [f for f in os.listdir(gt_path) if f.endswith(".tif")]
+    num_files = len(valid_files)
+
+    if num_files == 0:
+        raise ValueError(f"No .tif files found in {gt_path}")
+    # Read the first image to get the TRUE shape
+    first_image_path = os.path.join(gt_path, valid_files[0])
+    sample_img = tiff.imread(first_image_path)
+    true_shape = sample_img.shape  # This will likely be (1036, 1070)
+    print(f"Detected image shape: {true_shape}")
 
     # NEW CODE dynamically assigning number of golden truth images -----------------
     # 1. Filter for valid TIF files first
@@ -20,7 +30,7 @@ def create_train_data(input_path, gt_path):
         raise ValueError(f"No .tif files found in {gt_path}")
 
     # 2. Dynamically allocate memory based on what you actually have
-    mask_imgs = np.zeros((num_files, 1070, 1036), dtype='float32')
+    mask_imgs = np.zeros((num_files, true_shape[0], true_shape[1]), dtype='float32')
 
     ii = 0
     print('Loading masks from ', input_path)
@@ -54,17 +64,29 @@ def create_gt_data(gt_path):
 	# if mask images contain multiple masks, they should be split into single-mask images beforehand.
 	# second&third dim. is the dimension of input images
     
+    valid_files = [f for f in os.listdir(gt_path) if f.endswith(".tif")]
+    num_files = len(valid_files)
+
+    if num_files == 0:
+        raise ValueError(f"No .tif files found in {gt_path}")
+    # Read the first image to get the TRUE shape
+    first_image_path = os.path.join(gt_path, valid_files[0])
+    sample_img = tiff.imread(first_image_path)
+    true_shape = sample_img.shape  # This will likely be (1036, 1070)
+    print(f"Detected image shape: {true_shape}")
+
+
     # NEW CODE dynamically assigning number of golden truth images -----------------
-    # 1. Filter for valid TIF files first
+    # Filter for valid TIF files first
     valid_files = [f for f in os.listdir(gt_path) if f.endswith(".tif")]
     num_files = len(valid_files)
 
     if num_files == 0:
         raise ValueError(f"No .tif files found in {gt_path}")
 
-    # 2. Dynamically allocate memory based on what you actually have
+    # Dynamically allocate memory based on what you actually have
     
-    gt_mask_imgs = np.zeros((num_files, 1070, 1036), dtype='float32')
+    gt_mask_imgs = np.zeros((num_files, true_shape[0], true_shape[1]), dtype='float32')
     ii = 0
     for image_name in os.listdir(gt_path):  # Go through all the .tif files in the folder
         if image_name.endswith(".tif"):
