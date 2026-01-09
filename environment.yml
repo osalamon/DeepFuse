@@ -1,4 +1,4 @@
-name: deepfuse_local01   # needs more than 12 GB of RAM just for Fluo-N2DH-GOWT1...
+name: deepfuse_local01   # intended for local test, but needs more than 12 GB of RAM just for Fluo-N2DH-GOWT1... it wasn't used at all
 channels:
   - conda-forge
   - defaults
