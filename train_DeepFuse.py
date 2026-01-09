@@ -187,7 +187,7 @@ print("Starting visualization...")
 
 # 1. Pick a random image index to test (e.g., the 10th image in the dataset)
 # Ensure we don't pick an index larger than we have
-test_idx = 10
+test_idx = 48
 if test_idx >= in1.shape[0]:
     test_idx = 0
 
