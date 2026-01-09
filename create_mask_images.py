@@ -10,7 +10,7 @@ def create_train_data(input_path, gt_path):
 	# first dimension is the number of available GT single-mask images (Gold segmentation annotations)
 	# if mask images contain multiple masks, they should be split into single-mask images beforehand.
 	# second&third dim. is the dimension of input images
-    valid_files = [f for f in os.listdir(gt_path) if f.endswith(".tif")]
+    valid_files = sorted([f for f in os.listdir(gt_path) if f.endswith(".tif")])
     num_files = len(valid_files)
 
     if num_files == 0:
@@ -64,7 +64,7 @@ def create_gt_data(gt_path):
 	# if mask images contain multiple masks, they should be split into single-mask images beforehand.
 	# second&third dim. is the dimension of input images
     
-    valid_files = [f for f in os.listdir(gt_path) if f.endswith(".tif")]
+    valid_files = sorted([f for f in os.listdir(gt_path) if f.endswith(".tif")])
     num_files = len(valid_files)
 
     if num_files == 0:
