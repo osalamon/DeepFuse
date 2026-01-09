@@ -14,16 +14,16 @@ learning_rate = 4*1e-4
 smooth = 1e-16
 num_of_epochs = 100
 num_of_filters = 16
-im_len = 1036
-im_wid = 1070
+im_len = 1010
+im_wid = 1010
 
-# Define input paths
-input_path1 = '/mnt/proj1/eu-25-40/innovaite/synchronized_data/BF-C2DL-MuSC/CALT-US/01_RES/'
-input_path2 = '/mnt/proj1/eu-25-40/innovaite/synchronized_data/BF-C2DL-MuSC/KIT-Sch-GE/01_RES/'
-input_path3 = '/mnt/proj1/eu-25-40/innovaite/synchronized_data/BF-C2DL-MuSC/KTH-SE (3)/01_RES/'
-input_path4 = '/mnt/proj1/eu-25-40/innovaite/synchronized_data/BF-C2DL-MuSC/MU-Lux-CZ/01_RES/'
 
-gt_path = '/mnt/proj1/eu-25-40/innovaite/synchronized_data/BF-C2DL-MuSC/01_GT/SEG/'
+input_path1 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/01_RES/'
+input_path2 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/01_RES/'
+input_path3 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/01_RES/'
+input_path4 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/01_RES/'
+input_path5 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/01_RES/'
+gt_path = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/01_GT/SEG/'
 
 def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
@@ -39,7 +39,7 @@ input1 = Input(shape=(im_len, im_wid, 1))
 input2 = Input(shape=(im_len, im_wid, 1))
 input3 = Input(shape=(im_len, im_wid, 1))
 input4 = Input(shape=(im_len, im_wid, 1))
-# input5 = Input(shape=(im_len, im_wid, 1))
+input5 = Input(shape=(im_len, im_wid, 1))
 # input6 = Input(shape=(im_len, im_wid, 1))
 # input7 = Input(shape=(im_len, im_wid, 1))
 # input8 = Input(shape=(im_len, im_wid, 1))
@@ -72,10 +72,10 @@ x4 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x4)
 x4 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x4)
 x4 = Model(inputs=input4, outputs=x4)
 # 
-# x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input5)
-# x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x5)
-# x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x5)
-# x5 = Model(inputs=input5, outputs=x5)
+x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input5)
+x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x5)
+x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x5)
+x5 = Model(inputs=input5, outputs=x5)
 # # 
 # x6 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input6)
 # x6 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x6)
@@ -135,7 +135,7 @@ x4 = Model(inputs=input4, outputs=x4)
 # combined = concatenate([x1.output, x2.output, x3.output, x4.output, x5.output, x6.output, x7.output, x8.output, x9.output, x10.output, x11.output, x12.output, x13.output, x14.output, x15.output, x16.output])
 # combined = concatenate([x1.output, x2.output, x3.output, x4.output])
 # print(f"DEBUG: x1={x1}, x2={x2}, x3={x3}, x4={x4}")
-merged = add([x1.output, x2.output, x3.output, x4.output])
+merged = add([x1.output, x2.output, x3.output, x4.output, x5.output])
 # feed the combined output to a non-linear activation function
 # z = Conv2D(1, (1, 1), activation='sigmoid')(combined)
 output = Conv2D(1, (1,1), activation='sigmoid')(merged)
@@ -149,7 +149,7 @@ output = Conv2D(1, (1,1), activation='sigmoid')(merged)
 
 
 
-model = Model(inputs=[x1.input, x2.input, x3.input, x4.input], outputs=[output])
+model = Model(inputs=[x1.input, x2.input, x3.input, x4.input, x5.input], outputs=[output])
 
 model.compile(loss=dice_coef_loss, optimizer=Adam(lr=learning_rate), metrics=[dice_coef])
 model.summary()
@@ -159,7 +159,7 @@ in1 = create_train_data(input_path1, gt_path)	# input_path1 should contain segme
 in2 = create_train_data(input_path2, gt_path)	# gt_path should contain tracking/detection markers
 in3 = create_train_data(input_path3, gt_path)	# only masks which have a matching marker will be loaded.
 in4 = create_train_data(input_path4, gt_path)
-# in5 = create_train_data(input_path5, gt_path)
+in5 = create_train_data(input_path5, gt_path)
 # in6 = create_train_data(input_path6, gt_path)
 # in7 = create_train_data(input_path7, gt_path)
 # in8 = create_train_data(input_path8, gt_path)
@@ -176,4 +176,69 @@ target = create_gt_data(gt_path)
 mcp_save = ModelCheckpoint('model_in16_5x5_' + format(learning_rate, '.0e') + '_' + str(num_of_epochs) + '_' + str(num_of_filters) + '.h5', save_best_only=True, monitor='val_loss', mode='min')
 # model.fit(x=[in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, in14, in15, in16], y=target, batch_size=1, epochs=num_of_epochs, verbose=2, shuffle=True, callbacks=[mcp_save], validation_split=0.2)
 
-model.fit(x=[in1, in2, in3, in4], y=target, batch_size=1, epochs=num_of_epochs, verbose=2, shuffle=True, callbacks=[mcp_save], validation_split=0.2)
+model.fit(x=[in1, in2, in3, in4, in5], y=target, batch_size=1, epochs=num_of_epochs, verbose=2, shuffle=True, callbacks=[mcp_save], validation_split=0.2)
+
+# ==========================================
+# VISUALIZATION BLOCK (Paste at end of script)
+# ==========================================
+import matplotlib.pyplot as plt
+
+print("Starting visualization...")
+
+# 1. Pick a random image index to test (e.g., the 10th image in the dataset)
+# Ensure we don't pick an index larger than we have
+test_idx = 10
+if test_idx >= in1.shape[0]:
+    test_idx = 0
+
+print(f"Visualizing image index: {test_idx}")
+
+# 2. Prepare inputs for prediction
+# We use [test_idx : test_idx+1] to keep the 4th dimension.
+# In R, this is like preventing 'drop=TRUE'.
+# Shape becomes (1, 1010, 1010, 1)
+sample_inputs = [
+    in1[test_idx : test_idx+1],
+    in2[test_idx : test_idx+1],
+    in3[test_idx : test_idx+1],
+    in4[test_idx : test_idx+1],
+    in5[test_idx : test_idx+1]
+]
+
+# 3. Run the prediction
+# Returns a probability map (values 0.0 to 1.0)
+prediction = model.predict(sample_inputs)
+
+# 4. Threshold the output (DeepFuse outputs probabilities)
+# Anything > 0.5 is a cell, anything < 0.5 is background
+prediction_binary = (prediction > 0.5).astype(float)
+
+# 5. Create a plot with 7 columns: 5 Inputs + 1 Prediction + 1 Ground Truth
+fig, axes = plt.subplots(1, 7, figsize=(25, 5))
+
+# Helper to remove single dims for plotting (1010, 1010, 1) -> (1010, 1010)
+# In R, this is basically 'as.matrix()'
+def to_img(tensor):
+    return tensor.squeeze()
+
+# Plot Inputs
+axes[0].imshow(to_img(in1[test_idx]), cmap='gray'); axes[0].set_title("Input 1 (CALT)")
+axes[1].imshow(to_img(in2[test_idx]), cmap='gray'); axes[1].set_title("Input 2 (KIT)")
+axes[2].imshow(to_img(in3[test_idx]), cmap='gray'); axes[2].set_title("Input 3 (KTH)")
+axes[3].imshow(to_img(in4[test_idx]), cmap='gray'); axes[3].set_title("Input 4 (MU)")
+axes[4].imshow(to_img(in5[test_idx]), cmap='gray'); axes[4].set_title("Input 5 (New)")
+
+# Plot Result
+axes[5].imshow(to_img(prediction_binary[0]), cmap='jet'); axes[5].set_title("DeepFuse Result")
+
+# Plot Ground Truth
+axes[6].imshow(to_img(target[test_idx]), cmap='gray'); axes[6].set_title("Gold Truth")
+
+# Remove axes ticks for cleanliness
+for ax in axes:
+    ax.axis('off')
+
+# 6. Save to disk
+output_filename = "visualization_result.png"
+plt.savefig(output_filename, dpi=150)
+print(f"Saved visualization to {os.getcwd()}/{output_filename}")
