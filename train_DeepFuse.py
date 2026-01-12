@@ -135,10 +135,12 @@ x5 = Model(inputs=input5, outputs=x5)
 # combined = concatenate([x1.output, x2.output, x3.output, x4.output, x5.output, x6.output, x7.output, x8.output, x9.output, x10.output, x11.output, x12.output, x13.output, x14.output, x15.output, x16.output])
 # combined = concatenate([x1.output, x2.output, x3.output, x4.output])
 # print(f"DEBUG: x1={x1}, x2={x2}, x3={x3}, x4={x4}")
-merged = add([x1.output, x2.output, x3.output, x4.output, x5.output])
+# merged = add([x1.output, x2.output, x3.output, x4.output, x5.output])
+combined = concatenate([x1.output, x2.output, x3.output, x4.output, x5.output])
+
 # feed the combined output to a non-linear activation function
 # z = Conv2D(1, (1, 1), activation='sigmoid')(combined)
-output = Conv2D(1, (1,1), activation='sigmoid')(merged)
+output = Conv2D(1, (1,1), activation='sigmoid')(combined)
 
 # our model will accept the inputs of 16 branches and then output a single value
 # model = Model(inputs=[x1.input, x2.input, x3.input, x4.input, x5.input, x6.input, x7.input, x8.input, x9.input, x10.input, x11.input, x12.input, x13.input, x14.input, x15.input, x16.input], outputs=z)
