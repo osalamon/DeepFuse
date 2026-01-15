@@ -6,7 +6,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv2D, add
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import backend as K
-from create_mask_images import create_train_data, create_gt_data
+from create_mask_images import create_train_data
 
 # --- Configuration ---
 # Hardcoded paths from the training script
@@ -19,9 +19,9 @@ input_paths = [
 ]
 gt_path = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/01_GT/SEG/'
 
-output_dir = "./output" # Point this to your output folder
-im_len = 1010
-im_wid = 1010
+output_dir = "." # Point this to your output folder
+im_len = 101
+im_wid = 101
 num_of_filters = 16
 batch_size = 1 # Use batch size 1 for safer inference memory-wise
 
@@ -65,29 +65,42 @@ def build_model():
 # --- Main Evaluation Loop ---
 def main():
     print("--- Loading Data ---")
-    X_data = []
-    for p in input_paths:
-        print(f"Loading from: {p}")
-        data = create_train_data(p, gt_path)
-        X_data.append(data)
-    
-    print(f"Loading GT from: {gt_path}")
-    Y_data = create_gt_data(gt_path)
-    
+
+    # FIX: Logic to handle multiple inputs vs single target
+    X_data_list = []
+    Y_ground_truth = None
+
+    for i, p in enumerate(input_paths):
+        print(f"Loading input branch {i+1} from: {p}")
+        data, gt = create_train_data(p, gt_path)
+
+        X_data_list.append(data)    
+    # print(f"Loading GT from: {gt_path}")
+    # Y_data = create_gt_data(gt_path)
+
+        if i == 0:
+            Y_ground_truth = gt
+        else:
+            # Optional: Safety check to ensure sample counts match
+            if gt.shape[0] != Y_ground_truth.shape[0]:
+                raise ValueError("Mismatch in number of samples between input folders!")
+
+
     # Calculate split point for validation (last 20%)
-    total_samples = Y_data.shape[0]
+    total_samples = Y_ground_truth.shape[0]
     split_idx = int(total_samples * 0.8)
     
     # Prepare lists for inputs
-    X_full = X_data
-    X_val = [x[split_idx:] for x in X_data]
-    Y_full = Y_data
-    Y_val = Y_data[split_idx:]
+    X_full = X_data_list
+    X_val = [x[split_idx:] for x in X_data_list]
+
+    Y_full = Y_ground_truth
+    Y_val = Y_ground_truth[split_idx:]
     
     print(f"Data Loaded. Total samples: {total_samples}, Validation samples: {len(Y_val)}")
 
     # Find model files
-    model_files = glob.glob(os.path.join(output_dir, "**/*.h5"), recursive=True)
+    model_files = glob.glob(os.path.join("*.h5"), recursive=True)
     if not model_files:
         print("No .h5 files found!")
         return
