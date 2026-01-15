@@ -4,8 +4,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, concatenate, Conv2D, add
 from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import Adam
-from create_mask_images import create_train_data, create_gt_data
-import tensorflow.compat.v1 as tf
+from create_mask_images import create_train_data
 from tensorflow.keras.callbacks import ModelCheckpoint
 import os
 
@@ -14,8 +13,8 @@ learning_rate = 4*1e-4
 smooth = 1e-16
 num_of_epochs = 100
 num_of_filters = 16
-im_len = 1010
-im_wid = 1010
+im_len = 101
+im_wid = 101
 
 
 input_path1 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/01_RES/'
@@ -156,12 +155,27 @@ model = Model(inputs=[x1.input, x2.input, x3.input, x4.input, x5.input], outputs
 model.compile(loss=dice_coef_loss, optimizer=Adam(lr=learning_rate), metrics=[dice_coef])
 model.summary()
 
-## Create training data
-in1 = create_train_data(input_path1, gt_path)	# input_path1 should contain segmentation masks from the first source
-in2 = create_train_data(input_path2, gt_path)	# gt_path should contain tracking/detection markers
-in3 = create_train_data(input_path3, gt_path)	# only masks which have a matching marker will be loaded.
-in4 = create_train_data(input_path4, gt_path)
-in5 = create_train_data(input_path5, gt_path)
+## Create training data ------------------------------------------------------
+# We unpack the tuple (Input, GroundTruth) returned by the function.
+print("--- Loading Input 1 ---")
+in1, target = create_train_data(input_path1, gt_path) 
+
+print("--- Loading Input 2 ---")
+# We use '_' to ignore the second return value because 'target' is already loaded
+in2, _ = create_train_data(input_path2, gt_path)
+
+print("--- Loading Input 3 ---")
+in3, _ = create_train_data(input_path3, gt_path)
+
+print("--- Loading Input 4 ---")
+in4, _ = create_train_data(input_path4, gt_path)
+
+print("--- Loading Input 5 ---")
+in5, _ = create_train_data(input_path5, gt_path)
+
+# Verify that all datasets have the same number of samples
+print(f"Shapes consistency check:")
+print(f"In1: {in1.shape}, In2: {in2.shape}, Target: {target.shape}")
 # in6 = create_train_data(input_path6, gt_path)
 # in7 = create_train_data(input_path7, gt_path)
 # in8 = create_train_data(input_path8, gt_path)
@@ -173,7 +187,11 @@ in5 = create_train_data(input_path5, gt_path)
 # in14 = create_train_data(input_path14, gt_path)
 # in15 = create_train_data(input_path15, gt_path)
 # in16 = create_train_data(input_path16, gt_path)
-target = create_gt_data(gt_path)
+# target = create_train_data(gt_path)
+
+if not (in1.shape[0] == in2.shape[0] == target.shape[0]):
+    raise ValueError("Mismatch in number of samples! Check if all folders have the exact same files.")
+
 # Train the model
 mcp_save = ModelCheckpoint('model_in16_5x5_' + format(learning_rate, '.0e') + '_' + str(num_of_epochs) + '_' + str(num_of_filters) + '.h5', save_best_only=True, monitor='val_loss', mode='min')
 # model.fit(x=[in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, in14, in15, in16], y=target, batch_size=1, epochs=num_of_epochs, verbose=2, shuffle=True, callbacks=[mcp_save], validation_split=0.2)
