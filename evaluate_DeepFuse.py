@@ -117,7 +117,7 @@ def main():
         try:
             # Load weights
             model.load_weights(m_path)
-            
+            print(f"Evaluating Model: {m_path}")
             # --- Evaluate on Full Set ---
             preds_full = model.predict(X_full, batch_size=batch_size, verbose=0)
             # Threshold predictions (binary classification)
