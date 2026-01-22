@@ -17,12 +17,12 @@ im_len = 101
 im_wid = 101
 
 
-input_path1 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/01_RES/'
-input_path2 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/01_RES/'
-input_path3 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/01_RES/'
-input_path4 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/01_RES/'
-input_path5 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/01_RES/'
-gt_path = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/01_GT/SEG/'
+input_path1 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/02_RES/'
+input_path2 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/02_RES/'
+input_path3 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/02_RES/'
+input_path4 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/02_RES/'
+input_path5 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/02_RES/'
+gt_path = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/02_GT/SEG/'
 
 def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)

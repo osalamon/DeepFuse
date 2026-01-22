@@ -13,13 +13,13 @@ from tensorflow.keras.layers import Input, concatenate, Conv2D, add
 # --- Configuration ---
 # Hardcoded paths from the training script
 input_paths = [
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/01_RES/',
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/01_RES/',
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/01_RES/',
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/01_RES/',
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/01_RES/'
+    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/02_RES/',
+    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/02_RES/',
+    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/02_RES/',
+    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/02_RES/',
+    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/02_RES/'
 ]
-gt_path = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/01_GT/SEG/'
+gt_path = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/02_GT/SEG/'
 
 output_dir = "." # Point this to your output folder
 im_len = 101
