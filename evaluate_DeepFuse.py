@@ -1,6 +1,5 @@
 import os
 import glob
-from turtle import mode
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
@@ -222,7 +221,7 @@ def main():
     print(f"Data Loaded. Total samples: {total_samples}, Validation samples: {len(Y_val)}")
 
     # Find model files
-    model_files = glob.glob(os.path.join("*.h5"), recursive=True)
+    model_files = glob.glob(os.path.join("./output_3_only02_GT_BF-C2DL-HSC/", "*.h5"), recursive=True)
     if not model_files:
         print("No .h5 files found!")
         return
