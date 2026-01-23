@@ -1,4 +1,6 @@
 import numpy as np
+import argparse
+import sys
 from tensorflow.keras.models import Model
 # from tensorflow.keras.layers import Input, concatenate, Conv2D
 from tensorflow.keras.layers import Input, concatenate, Conv2D, add
@@ -8,6 +10,25 @@ from create_mask_images import create_train_data
 from tensorflow.keras.callbacks import ModelCheckpoint
 import os
 
+# --- ARGUMENT PARSING ---
+parser = argparse.ArgumentParser(description='Train DeepFuse on specific sequence')
+parser.add_argument('--seq', type=str, required=True, choices=['01', '02'], help='Sequence ID (01 or 02)')
+parser.add_argument('--timestamp', type=str, default='debug', help='Timestamp for unique folder generation')
+args = parser.parse_args()
+
+seq_id = args.seq
+timestamp = args.timestamp
+
+# Create specific output folder: e.g., "trained_on_01_20260123"
+output_folder = f"trained_on_{seq_id}_{timestamp}"
+if not os.path.exists(output_folder):
+    os.makedirs(output_folder)
+print(f"--- TRAINING CONFIGURATION ---")
+print(f"Sequence: {seq_id}")
+print(f"Output Folder: {output_folder}")
+# ------------------------
+
+# --- MODEL DEFINITION ---
 K.set_image_data_format('channels_last')  # TF dimension ordering in this code
 learning_rate = 4*1e-4
 smooth = 1e-16
@@ -16,13 +37,12 @@ num_of_filters = 16
 im_len = 101
 im_wid = 101
 
-
-input_path1 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/02_RES/'
-input_path2 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/02_RES/'
-input_path3 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/02_RES/'
-input_path4 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/02_RES/'
-input_path5 = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/02_RES/'
-gt_path = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/02_GT/SEG/'
+input_path1 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/{seq_id}_RES/'
+input_path2 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/{seq_id}_RES/'
+input_path3 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/{seq_id}_RES/'
+input_path4 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/{seq_id}_RES/'
+input_path5 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/{seq_id}_RES/'
+gt_path = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/{seq_id}_GT/SEG/'
 
 def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
@@ -193,7 +213,11 @@ if not (in1.shape[0] == in2.shape[0] == target.shape[0]):
     raise ValueError("Mismatch in number of samples! Check if all folders have the exact same files.")
 
 # Train the model
-mcp_save = ModelCheckpoint('model_in16_5x5_' + format(learning_rate, '.0e') + '_' + str(num_of_epochs) + '_' + str(num_of_filters) + '.h5', save_best_only=True, monitor='val_loss', mode='min')
+# Save model INSIDE the specific output folder with the specific name requested
+model_filename = f"model_5x5_{learning_rate:.0e}_{num_of_epochs}_{num_of_filters}_trained_on_{seq_id}.h5"
+model_save_path = os.path.join(output_folder, model_filename)
+
+mcp_save = ModelCheckpoint(model_save_path, save_best_only=True, monitor='val_loss', mode='min')
 # model.fit(x=[in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, in14, in15, in16], y=target, batch_size=1, epochs=num_of_epochs, verbose=2, shuffle=True, callbacks=[mcp_save], validation_split=0.2)
 
 model.fit(x=[in1, in2, in3, in4, in5], y=target, batch_size=1, epochs=num_of_epochs, verbose=2, shuffle=True, callbacks=[mcp_save], validation_split=0.2)
@@ -258,7 +282,9 @@ axes[6].imshow(to_img(target[test_idx]), cmap='gray'); axes[6].set_title("Gold T
 for ax in axes:
     ax.axis('off')
 
-# 6. Save to disk
-output_filename = "visualization_result.png"
-plt.savefig(output_filename, dpi=150)
-print(f"Saved visualization to {os.getcwd()}/{output_filename}")
+# 6. Save to disk INSIDE the output folder
+viz_filename = f"vizualization_result_trained_on_{seq_id}.png"
+viz_save_path = os.path.join(output_folder, viz_filename)
+
+plt.savefig(viz_save_path, dpi=150)
+print(f"Saved visualization to {viz_save_path}")

@@ -1,5 +1,7 @@
 import os
 import glob
+import argparse
+import sys
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
@@ -9,18 +11,54 @@ from tensorflow.keras import backend as K
 from create_mask_images import create_train_data
 from tensorflow.keras.layers import Input, concatenate, Conv2D, add
 
-# --- Configuration ---
-# Hardcoded paths from the training script
-input_paths = [
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/02_RES/',
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/02_RES/',
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/02_RES/',
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/02_RES/',
-    '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/02_RES/'
-]
-gt_path = '/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/02_GT/SEG/'
 
-output_dir = "." # Point this to your output folder
+# --- ARGUMENT PARSING ---
+parser = argparse.ArgumentParser(description='Evaluate DeepFuse on specific sequence')
+parser.add_argument('--seq', type=str, required=True, choices=['01', '02'], help='Which sequence, its ID (01 or 02), to test on')
+parser.add_argument('--model', type=str, default='debug', help='Which model to evaluate')
+args = parser.parse_args()
+
+seq_id = args.seq
+model_path = args.model
+
+
+print(f"--- EVALUATING CONFIGURATION ---")
+print(f"Evaluating Model: {model_path}")
+print(f"Testing on: {seq_id}")
+# ------------------------
+
+
+# --- Configuration ---
+input_paths = [
+    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/{seq_id}_RES/',
+    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/{seq_id}_RES/',
+    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/{seq_id}_RES/',
+    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/{seq_id}_RES/',
+    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/{seq_id}_RES/'
+]
+gt_path = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/{seq_id}_GT/SEG/'
+
+# Determine output directory from model path so log is saved there
+output_dir = os.path.dirname(os.path.abspath(model_path)) 
+
+# Redirect print output to both terminal and a file in the output_dir
+class DualLogger(object):
+    def __init__(self, filename):
+        self.terminal = sys.stdout
+        self.log = open(filename, "w")
+
+    def write(self, message):
+        self.terminal.write(message)
+        self.log.write(message)
+
+    def flush(self):
+        self.terminal.flush()
+        self.log.flush()
+
+log_filename = os.path.join(output_dir, f"evaluation_results_on_{seq_id}.txt")
+sys.stdout = DualLogger(log_filename)
+print(f"Saving evaluation log to: {log_filename}")
+
 im_len = 101
 im_wid = 101
 num_of_filters = 16
@@ -221,7 +259,7 @@ def main():
     print(f"Data Loaded. Total samples: {total_samples}, Validation samples: {len(Y_val)}")
 
     # Find model files
-    model_files = glob.glob(os.path.join("./output_3_only02_GT_BF-C2DL-HSC/", "*.h5"), recursive=True)
+    model_files = glob.glob(os.path.join(model_path), recursive=True)
     if not model_files:
         print("No .h5 files found!")
         return
