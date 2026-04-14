@@ -4,5 +4,5 @@
     type = "symlink,copy"
 [core]
     remote = myremote
-['remote "myremote"']
-    url = /mnt/proj1/eu-25-40/innovaite/dvc_remote
+[remote "myremote"]
+    url = ssh://karolina@karolina.uu.se/path/to/your/dvc_remote
