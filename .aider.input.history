@@ -110,3 +110,24 @@
 
 # 2026-04-14 13:23:16.397880
 +/commit
+
+# 2026-04-14 13:25:28.982522
++(deepfuse_local01) osalamon@vostrynesty:~/OPENsalam/WP3/DeepFuse$ dvc pull
++Collecting                                                                                                                                                                                                                                            |0.00 [00:00,    ?entry/s]
++Fetching
++Building workspace index                                                                                                                                                                                                                              |0.00 [00:00,    ?entry/s]
++Comparing indexes                                                                                                                                                                                                                                    |1.00 [00:00, 3.57kentry/s]
++Applying changes                                                                                                                                                                                                                                      |0.00 [00:00,     ?file/s]
++Everything is up to date. How can I list available datasets?
+
+# 2026-04-14 14:45:56.895923
++find . -name "*.dvc"                                                                                                                                                                                                                                                            It doesn't find anything... where should I issue the cmd? I am on my local laptop, not inside Supercomputer...
+
+# 2026-04-15 03:14:03.956408
++Yes
+
+# 2026-04-15 03:14:14.140173
++/exit
+
+# 2026-04-15 16:05:10.149972
++Y
