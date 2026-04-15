@@ -5,4 +5,6 @@
 [core]
     remote = myremote
 [remote "myremote"]
-    url = ssh://karolina@karolina.uu.se/path/to/your/dvc_remote
+    # TODO: Replace the URL below with your actual SSH remote path
+    # Example format: ssh://username@server-address/path/to/dvc_remote
+    url = ssh://<USERNAME>@<SERVER_ADDRESS>/<PATH_TO_DVC_REMOTE>
