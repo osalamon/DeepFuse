@@ -1,10 +1,7 @@
-[cache]
-    dir = /mnt/proj1/eu-25-40/innovaite/dvc_store
-    shared = group
-    type = "symlink,copy"
 [core]
-    remote = myremote
-[remote "myremote"]
-    # TODO: Replace the URL below with your actual SSH remote path
-    # Example format: ssh://username@server-address/path/to/dvc_remote
-    url = ssh://<USERNAME>@<SERVER_ADDRESS>/<PATH_TO_DVC_REMOTE>
+    remote = hpc_storage
+[cache]
+    shared = group
+    dir = cache
+['remote "hpc_storage"']
+    url = ssh://karolina/mnt/proj1/eu-25-40/innovaite/dvc_store
