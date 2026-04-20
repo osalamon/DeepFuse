@@ -2,3 +2,11 @@ CTC_training_results/
 gold_detection_truth/
 __pycache__/
 .aider*
+.aider.tags.cache.v4/
+.aider.chat.history.md
+.aider.input.history
+.vscode/
+.env
+.aider.tags.cache.v4/cache.db
+.aider.tags.cache.v4/cache.db-shm
+.aider.tags.cache.v4/cache.db-wal
