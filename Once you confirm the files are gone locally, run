@@ -1,2 +1,0 @@
-git add .
-git commit -m "Remove large binary artifacts and clean up root directory"
