@@ -3,62 +3,105 @@
 # Get a unique timestamp for this entire run
 TIMESTAMP=$(date +%Y%m%d_%H%M%S)
 
-echo "Starting Cross-Validation Pipeline at $TIMESTAMP"
+echo "Starting 4-Fold Cross-Validation Pipeline at $TIMESTAMP"
+echo "============================================================"
+
+# Array of experiments: dataset_name fold_num
+experiments=(
+    "BF-C2DL-HSC 1"
+    "BF-C2DL-HSC 2"
+    "BF-C2DL-MuSC 1"
+    "BF-C2DL-MuSC 2"
+)
+
+results_file="results_${TIMESTAMP}.txt"
+echo "Results will be saved to: ${results_file}"
+echo ""
 
 # ---------------------------------------------------------
-# STEP 1: Train on Sequence 01
+# Training Phase
 # ---------------------------------------------------------
-echo "---------------------------------------------------"
-echo "Step 1: Training on Batch 01"
-echo "---------------------------------------------------"
-python train_DeepFuse.py --seq 01 --timestamp "$TIMESTAMP"
+echo "============================================================"
+echo "PHASE 1: TRAINING ALL 4 MODELS"
+echo "============================================================"
 
-# Capture the model path (assuming the naming convention in the python script)
-# We know the folder is trained_on_01_$TIMESTAMP
-MODEL_01_PATH="./trained_on_01_${TIMESTAMP}/model_5x5_4e-04_100_16_trained_on_01.h5"
-
-
-# ---------------------------------------------------------
-# STEP 2: Train on Sequence 02
-# ---------------------------------------------------------
-echo "---------------------------------------------------"
-echo "Step 2: Training on Batch 02"
-echo "---------------------------------------------------"
-python train_DeepFuse.py --seq 02 --timestamp "$TIMESTAMP"
-
-# Capture the model path
-MODEL_02_PATH="./trained_on_02_${TIMESTAMP}/model_5x5_4e-04_100_16_trained_on_02.h5"
-
-
-# ---------------------------------------------------------
-# STEP 3: Evaluate Model 01 on Data 02
-# ---------------------------------------------------------
-echo "---------------------------------------------------"
-echo "Step 3: Evaluating Model 01 (Trained on 01, Testing on 02)"
-echo "---------------------------------------------------"
-
-# Note: Using 'tee' to print to screen AND save to file
-# I assume your evaluate script accepts arguments. If it doesn't, 
-# you need to modify evaluate_DeepFuse.py similar to train_DeepFuse.py
-# Or let me know and I can help modify it.
-
-# Hypothetical command - adjust arguments as needed for your specific evaluate script
-python evaluate_DeepFuse.py \
-    --model "$MODEL_01_PATH" \
-    --seq 02 \
-    | tee "trained_on_01_evaluated_for_02.txt"
-
+for exp in "${experiments[@]}"; do
+    dataset=$(echo $exp | cut -d' ' -f1)
+    fold=$(echo $exp | cut -d' ' -f2)
+    
+    echo ""
+    echo "---------------------------------------------------"
+    echo "Training ${dataset} Fold ${fold}"
+    echo "---------------------------------------------------"
+    
+    python train_DeepFuse.py \
+        --dataset "${dataset}" \
+        --fold "${fold}" \
+        --timestamp "${TIMESTAMP}"
+    
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Training failed for ${dataset} fold ${fold}"
+        exit 1
+    fi
+done
 
 # ---------------------------------------------------------
-# STEP 4: Evaluate Model 02 on Data 01
+# Evaluation Phase
 # ---------------------------------------------------------
-echo "---------------------------------------------------"
-echo "Step 4: Evaluating Model 02 (Trained on 02, Testing on 01)"
-echo "---------------------------------------------------"
+echo ""
+echo "============================================================"
+echo "PHASE 2: EVALUATING ALL 4 MODELS ON TEST SETS"
+echo "============================================================"
 
-python evaluate_DeepFuse.py \
-    --model "$MODEL_02_PATH" \
-    --seq 01 \
-    | tee "trained_on_02_evaluated_for_01.txt"
+# Clear results file
+echo "DeepFuse Cross-Validation Results - ${TIMESTAMP}" > "${results_file}"
+echo "================================================" >> "${results_file}"
+echo "" >> "${results_file}"
 
-echo "Pipeline finished."
+for exp in "${experiments[@]}"; do
+    dataset=$(echo $exp | cut -d' ' -f1)
+    fold=$(echo $exp | cut -d' ' -f2)
+    
+    model_dir="trained_on_${dataset}_fold${fold}_${TIMESTAMP}"
+    model_path="${model_dir}/model_*.h5"
+    
+    # Find the actual model file
+    model_file=$(ls ${model_path} 2>/dev/null | head -n 1)
+    
+    if [ -z "${model_file}" ]; then
+        echo "ERROR: No model file found in ${model_dir}"
+        continue
+    fi
+    
+    echo ""
+    echo "---------------------------------------------------"
+    echo "Evaluating ${dataset} Fold ${fold}"
+    echo "Model: ${model_file}"
+    echo "---------------------------------------------------"
+    
+    # Run evaluation and capture output
+    eval_output=$(python evaluate_DeepFuse.py \
+        --dataset "${dataset}" \
+        --fold "${fold}" \
+        --model "${model_file}" 2>&1)
+    
+    echo "${eval_output}"
+    
+    # Extract F1 and Jaccard scores from output
+    f1_score=$(echo "${eval_output}" | grep "TEST" | awk '{print $4}')
+    jaccard_score=$(echo "${eval_output}" | grep "TEST" | awk '{print $6}')
+    
+    # Save to results file
+    echo "${dataset} Fold ${fold}:" >> "${results_file}"
+    echo "  F1 (Dice): ${f1_score}" >> "${results_file}"
+    echo "  Jaccard:   ${jaccard_score}" >> "${results_file}"
+    echo "" >> "${results_file}"
+done
+
+echo ""
+echo "============================================================"
+echo "PIPELINE COMPLETE"
+echo "============================================================"
+echo "Results saved to: ${results_file}"
+echo ""
+cat "${results_file}"
