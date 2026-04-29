@@ -1,5 +1,8 @@
-[cache]
-    dir = /mnt/proj1/eu-25-40/innovaite/dvc_store
-    shared = group
-    type = "symlink,copy"
+[core]                                                                                                                                                                                                                                                                                    
+    remote = hpc_storage                                                                                                                                                                                                                                                                  
+[cache]                                                                                                                                                                                                                                                                                   
+    shared = group                                                                                                                                                                                                                                                                        
+    dir = cache                                                                                                                                                                                                                                                                           
+['remote "hpc_storage"']                                                                                                                                                                                                                                                                  
+    url = /mnt/proj1/eu-25-40/innovaite/dvc_store  
 
