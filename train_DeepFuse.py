@@ -1,30 +1,33 @@
 import numpy as np
 import argparse
 import sys
+from pathlib import Path
 from tensorflow.keras.models import Model
-# from tensorflow.keras.layers import Input, concatenate, Conv2D
 from tensorflow.keras.layers import Input, concatenate, Conv2D, add
 from tensorflow.keras import backend as K
 from tensorflow.keras.optimizers import Adam
-from create_mask_images import create_train_data
+from create_mask_images import create_multi_input_data_from_parquet
 from tensorflow.keras.callbacks import ModelCheckpoint
 import os
 
 # --- ARGUMENT PARSING ---
-parser = argparse.ArgumentParser(description='Train DeepFuse on specific sequence')
-parser.add_argument('--seq', type=str, required=True, choices=['01', '02'], help='Sequence ID (01 or 02)')
+parser = argparse.ArgumentParser(description='Train DeepFuse on HSC or MuSC dataset using parquet splits')
+parser.add_argument('--dataset', type=str, required=True, choices=['BF-C2DL-HSC', 'BF-C2DL-MuSC'], help='Dataset name')
+parser.add_argument('--fold', type=int, required=True, choices=[1, 2], help='Cross-validation fold (1 or 2)')
 parser.add_argument('--timestamp', type=str, default='debug', help='Timestamp for unique folder generation')
 args = parser.parse_args()
 
-seq_id = args.seq
+dataset_name = args.dataset
+fold_num = args.fold
 timestamp = args.timestamp
 
-# Create specific output folder: e.g., "trained_on_01_20260123"
-output_folder = f"trained_on_{seq_id}_{timestamp}"
+# Create specific output folder: e.g., "trained_on_BF-C2DL-HSC_fold1_20260123"
+output_folder = f"trained_on_{dataset_name}_fold{fold_num}_{timestamp}"
 if not os.path.exists(output_folder):
     os.makedirs(output_folder)
 print(f"--- TRAINING CONFIGURATION ---")
-print(f"Sequence: {seq_id}")
+print(f"Dataset: {dataset_name}")
+print(f"Fold: {fold_num}")
 print(f"Output Folder: {output_folder}")
 # ------------------------
 
@@ -37,12 +40,57 @@ num_of_filters = 16
 im_len = 101
 im_wid = 101
 
-input_path1 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/{seq_id}_RES/'
-input_path2 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/{seq_id}_RES/'
-input_path3 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/{seq_id}_RES/'
-input_path4 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/{seq_id}_RES/'
-input_path5 = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/{seq_id}_RES/'
-gt_path = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/{seq_id}_GT/SEG/'
+# Relative paths from repo root
+data_root = Path("data/synchronized_data") / dataset_name
+parquet_path = Path("data/dataframes") / dataset_name / "whole_image" / f"{dataset_name}_split_fold-{fold_num}.parquet"
+
+# Competitor input paths (5 raters)
+input_paths = [
+    str(data_root / f"CALT-US/01_RES/"),
+    str(data_root / f"DREX-US/01_RES/"),
+    str(data_root / f"KIT-Sch-GE/01_RES/"),
+    str(data_root / f"KTH-SE (5)/01_RES/"),
+    str(data_root / f"MU-Lux-CZ/01_RES/"),
+]
+gt_path = str(data_root / "01_GT/SEG/")
+
+# For fold 2, we might need to use sequence 02 paths instead
+# The parquet file handles which frames to use, but we need to point to the right RES folders
+# For simplicity, we use 01_RES for all competitors since the parquet file filters by frame_id
+# If fold 2 uses sequence 02, we should adjust paths accordingly
+if fold_num == 2:
+    input_paths = [
+        str(data_root / f"CALT-US/02_RES/"),
+        str(data_root / f"DREX-US/02_RES/"),
+        str(data_root / f"KIT-Sch-GE/02_RES/"),
+        str(data_root / f"KTH-SE (5)/02_RES/"),
+        str(data_root / f"MU-Lux-CZ/02_RES/"),
+    ]
+    gt_path = str(data_root / "02_GT/SEG/")
+
+# --- HYPERPARAMETER SUMMARY ---
+print("\n" + "="*60)
+print("HYPERPARAMETER SUMMARY")
+print("="*60)
+print(f"  Architecture:        DeepFuse (5-branch CNN fusion)")
+print(f"  Kernel size:         (5, 5)")
+print(f"  Filters per branch:  {num_of_filters}")
+print(f"  Branch depth:        3 Conv2D layers")
+print(f"  Input crop size:     {im_len} x {im_wid}")
+print(f"  Final layer:         Conv2D(1, (1,1)) with sigmoid")
+print(f"  Optimizer:           Adam")
+print(f"  Learning rate:       {learning_rate}")
+print(f"  Loss function:       1 - Dice (smooth={smooth})")
+print(f"  Epochs:              {num_of_epochs}")
+print(f"  Batch size:          1")
+print(f"  Validation split:    20% (from train/val sequence)")
+print(f"  Checkpoint:          save_best_only=True, monitor=val_loss")
+print(f"  Total params:        ~66,321 (~259 KB)")
+print(f"  Dataset:             {dataset_name}")
+print(f"  Fold:                {fold_num}")
+print(f"  Parquet file:        {parquet_path}")
+print(f"  Competitors:         5 (CALT-US, DREX-US, KIT-Sch-GE, KTH-SE, MU-Lux-CZ)")
+print("="*60 + "\n")
 
 def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
@@ -59,116 +107,37 @@ input2 = Input(shape=(im_len, im_wid, 1))
 input3 = Input(shape=(im_len, im_wid, 1))
 input4 = Input(shape=(im_len, im_wid, 1))
 input5 = Input(shape=(im_len, im_wid, 1))
-# input6 = Input(shape=(im_len, im_wid, 1))
-# input7 = Input(shape=(im_len, im_wid, 1))
-# input8 = Input(shape=(im_len, im_wid, 1))
-# input9 = Input(shape=(im_len, im_wid, 1))
-# input10 = Input(shape=(im_len, im_wid, 1))
-# input11 = Input(shape=(im_len, im_wid, 1))
-# input12 = Input(shape=(im_len, im_wid, 1))
-# input13 = Input(shape=(im_len, im_wid, 1))
-# input14 = Input(shape=(im_len, im_wid, 1))
-# input15 = Input(shape=(im_len, im_wid, 1))
-# input16 = Input(shape=(im_len, im_wid, 1))
+
 # the first branch operates on the first input
 x1 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input1)
 x1 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x1)
 x1 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x1)
 x1 = Model(inputs=input1, outputs=x1)
+
 # the second branch operates on the second input
 x2 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input2)
 x2 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x2)
 x2 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x2)
 x2 = Model(inputs=input2, outputs=x2)
-# 
+
 x3 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input3)
 x3 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x3)
 x3 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x3)
 x3 = Model(inputs=input3, outputs=x3)
-# 
+
 x4 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input4)
 x4 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x4)
 x4 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x4)
 x4 = Model(inputs=input4, outputs=x4)
-# 
+
 x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input5)
 x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x5)
 x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x5)
 x5 = Model(inputs=input5, outputs=x5)
-# # 
-# x6 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input6)
-# x6 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x6)
-# x6 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x6)
-# x6 = Model(inputs=input6, outputs=x6)
-# # 
-# x7 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input7)
-# x7 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x7)
-# x7 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x7)
-# x7 = Model(inputs=input7, outputs=x7)
-# # 
-# x8 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input8)
-# x8 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x8)
-# x8 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x8)
-# x8 = Model(inputs=input8, outputs=x8)
-# # 
-# x9 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input9)
-# x9 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x9)
-# x9 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x9)
-# x9 = Model(inputs=input9, outputs=x9)
-# # 
-# x10 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input10)
-# x10 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x10)
-# x10 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x10)
-# x10 = Model(inputs=input10, outputs=x10)
-# # 
-# x11 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input11)
-# x11 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x11)
-# x11 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x11)
-# x11 = Model(inputs=input11, outputs=x11)
-# # 
-# x12 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input12)
-# x12 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x12)
-# x12 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x12)
-# x12 = Model(inputs=input12, outputs=x12)
-# #
-# x13 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input13)
-# x13 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x13)
-# x13 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x13)
-# x13 = Model(inputs=input13, outputs=x13)
-# # 
-# x14 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input14)
-# x14 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x14)
-# x14 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x14)
-# x14 = Model(inputs=input14, outputs=x14)
-# # 
-# x15 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input15)
-# x15 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x15)
-# x15 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x15)
-# x15 = Model(inputs=input15, outputs=x15)
-# # 
-# x16 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input16)
-# x16 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x16)
-# x16 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x16)
-# x16 = Model(inputs=input16, outputs=x16)
-# combine the output of all branches
-# combined = concatenate([x1.output, x2.output, x3.output, x4.output, x5.output, x6.output, x7.output, x8.output, x9.output, x10.output, x11.output, x12.output, x13.output, x14.output, x15.output, x16.output])
-# combined = concatenate([x1.output, x2.output, x3.output, x4.output])
-# print(f"DEBUG: x1={x1}, x2={x2}, x3={x3}, x4={x4}")
-# merged = add([x1.output, x2.output, x3.output, x4.output, x5.output])
+
 combined = concatenate([x1.output, x2.output, x3.output, x4.output, x5.output])
 
-# feed the combined output to a non-linear activation function
-# z = Conv2D(1, (1, 1), activation='sigmoid')(combined)
 output = Conv2D(1, (1,1), activation='sigmoid')(combined)
-
-# our model will accept the inputs of 16 branches and then output a single value
-# model = Model(inputs=[x1.input, x2.input, x3.input, x4.input, x5.input, x6.input, x7.input, x8.input, x9.input, x10.input, x11.input, x12.input, x13.input, x14.input, x15.input, x16.input], outputs=z)
-# model = Model(inputs=[x1.input, x2.input, x3.input, x4.input], outputs=z)
-# model = Model(inputs=[input1, input2, input3, input4], outputs=[output])
-
-# Check that all lengths match
-
-
 
 model = Model(inputs=[x1.input, x2.input, x3.input, x4.input, x5.input], outputs=[output])
 
@@ -176,114 +145,98 @@ model.compile(loss=dice_coef_loss, optimizer=Adam(lr=learning_rate), metrics=[di
 model.summary()
 
 ## Create training data ------------------------------------------------------
-# We unpack the tuple (Input, GroundTruth) returned by the function.
-print("--- Loading Input 1 ---")
-in1, target = create_train_data(input_path1, gt_path) 
+print(f"\n--- Loading TRAIN split from {parquet_path} ---")
+train_inputs, train_gts = create_multi_input_data_from_parquet(
+    str(parquet_path), 'train', input_paths, gt_path
+)
 
-print("--- Loading Input 2 ---")
-# We use '_' to ignore the second return value because 'target' is already loaded
-in2, _ = create_train_data(input_path2, gt_path)
+print(f"\n--- Loading VAL split from {parquet_path} ---")
+val_inputs, val_gts = create_multi_input_data_from_parquet(
+    str(parquet_path), 'val', input_paths, gt_path
+)
 
-print("--- Loading Input 3 ---")
-in3, _ = create_train_data(input_path3, gt_path)
+# Verify shapes
+print(f"\nShapes consistency check:")
+for i, inp in enumerate(train_inputs):
+    print(f"Train Input {i+1}: {inp.shape}")
+print(f"Train GT: {train_gts.shape}")
 
-print("--- Loading Input 4 ---")
-in4, _ = create_train_data(input_path4, gt_path)
+# Check all inputs have same number of samples
+train_n = train_inputs[0].shape[0]
+for i, inp in enumerate(train_inputs):
+    if inp.shape[0] != train_n:
+        raise ValueError(f"Mismatch in train samples! Input {i+1} has {inp.shape[0]}, expected {train_n}")
+if train_gts.shape[0] != train_n:
+    raise ValueError(f"Mismatch in train GT samples! GT has {train_gts.shape[0]}, expected {train_n}")
 
-print("--- Loading Input 5 ---")
-in5, _ = create_train_data(input_path5, gt_path)
-
-# Verify that all datasets have the same number of samples
-print(f"Shapes consistency check:")
-print(f"In1: {in1.shape}, In2: {in2.shape}, Target: {target.shape}")
-# in6 = create_train_data(input_path6, gt_path)
-# in7 = create_train_data(input_path7, gt_path)
-# in8 = create_train_data(input_path8, gt_path)
-# in9 = create_train_data(input_path9, gt_path)
-# in10 = create_train_data(input_path10, gt_path)
-# in11 = create_train_data(input_path11, gt_path)
-# in12 = create_train_data(input_path12, gt_path)
-# in13 = create_train_data(input_path13, gt_path)
-# in14 = create_train_data(input_path14, gt_path)
-# in15 = create_train_data(input_path15, gt_path)
-# in16 = create_train_data(input_path16, gt_path)
-# target = create_train_data(gt_path)
-
-if not (in1.shape[0] == in2.shape[0] == target.shape[0]):
-    raise ValueError("Mismatch in number of samples! Check if all folders have the exact same files.")
+val_n = val_inputs[0].shape[0]
+for i, inp in enumerate(val_inputs):
+    if inp.shape[0] != val_n:
+        raise ValueError(f"Mismatch in val samples! Input {i+1} has {inp.shape[0]}, expected {val_n}")
+if val_gts.shape[0] != val_n:
+    raise ValueError(f"Mismatch in val GT samples! GT has {val_gts.shape[0]}, expected {val_n}")
 
 # Train the model
-# Save model INSIDE the specific output folder with the specific name requested
-model_filename = f"model_5x5_{learning_rate:.0e}_{num_of_epochs}_{num_of_filters}_trained_on_{seq_id}.h5"
+model_filename = f"model_5x5_{learning_rate:.0e}_{num_of_epochs}_{num_of_filters}_{dataset_name}_fold{fold_num}.h5"
 model_save_path = os.path.join(output_folder, model_filename)
 
 mcp_save = ModelCheckpoint(model_save_path, save_best_only=True, monitor='val_loss', mode='min')
-# model.fit(x=[in1, in2, in3, in4, in5, in6, in7, in8, in9, in10, in11, in12, in13, in14, in15, in16], y=target, batch_size=1, epochs=num_of_epochs, verbose=2, shuffle=True, callbacks=[mcp_save], validation_split=0.2)
 
-model.fit(x=[in1, in2, in3, in4, in5], y=target, batch_size=1, epochs=num_of_epochs, verbose=2, shuffle=True, callbacks=[mcp_save], validation_split=0.2)
+print(f"\n--- Training ---")
+print(f"Train samples: {train_n}, Val samples: {val_n}")
+print(f"Model will be saved to: {model_save_path}")
+
+model.fit(
+    x=train_inputs,
+    y=train_gts,
+    batch_size=1,
+    epochs=num_of_epochs,
+    verbose=2,
+    shuffle=True,
+    callbacks=[mcp_save],
+    validation_data=(val_inputs, val_gts)
+)
 
 # ==========================================
-# VISUALIZATION BLOCK (Paste at end of script)
+# VISUALIZATION BLOCK
 # ==========================================
 import matplotlib.pyplot as plt
 
-print("Starting visualization...")
+print("\nStarting visualization...")
 
-# 1. Pick a random image index to test (e.g., the 10th image in the dataset)
-# Ensure we don't pick an index larger than we have
-test_idx = 48
-if test_idx >= in1.shape[0]:
-    test_idx = 0
+# Pick a random image index from validation set
+test_idx = min(48, val_n - 1)
+print(f"Visualizing validation image index: {test_idx}")
 
-print(f"Visualizing image index: {test_idx}")
-
-# 2. Prepare inputs for prediction
-# We use [test_idx : test_idx+1] to keep the 4th dimension.
-# In R, this is like preventing 'drop=TRUE'.
-# Shape becomes (1, 1010, 1010, 1)
 sample_inputs = [
-    in1[test_idx : test_idx+1],
-    in2[test_idx : test_idx+1],
-    in3[test_idx : test_idx+1],
-    in4[test_idx : test_idx+1],
-    in5[test_idx : test_idx+1]
+    val_inputs[0][test_idx : test_idx+1],
+    val_inputs[1][test_idx : test_idx+1],
+    val_inputs[2][test_idx : test_idx+1],
+    val_inputs[3][test_idx : test_idx+1],
+    val_inputs[4][test_idx : test_idx+1]
 ]
 
-# 3. Run the prediction
-# Returns a probability map (values 0.0 to 1.0)
 prediction = model.predict(sample_inputs)
-
-# 4. Threshold the output (DeepFuse outputs probabilities)
-# Anything > 0.5 is a cell, anything < 0.5 is background
 prediction_binary = (prediction > 0.5).astype(float)
 
-# 5. Create a plot with 7 columns: 5 Inputs + 1 Prediction + 1 Ground Truth
 fig, axes = plt.subplots(1, 7, figsize=(25, 5))
 
-# Helper to remove single dims for plotting (1010, 1010, 1) -> (1010, 1010)
-# In R, this is basically 'as.matrix()'
 def to_img(tensor):
     return tensor.squeeze()
 
-# Plot Inputs
-axes[0].imshow(to_img(in1[test_idx]), cmap='gray'); axes[0].set_title("Input 1 (CALT)")
-axes[1].imshow(to_img(in2[test_idx]), cmap='gray'); axes[1].set_title("Input 2 (KIT)")
-axes[2].imshow(to_img(in3[test_idx]), cmap='gray'); axes[2].set_title("Input 3 (KTH)")
-axes[3].imshow(to_img(in4[test_idx]), cmap='gray'); axes[3].set_title("Input 4 (MU)")
-axes[4].imshow(to_img(in5[test_idx]), cmap='gray'); axes[4].set_title("Input 5 (New)")
+axes[0].imshow(to_img(val_inputs[0][test_idx]), cmap='gray'); axes[0].set_title("Input 1 (CALT)")
+axes[1].imshow(to_img(val_inputs[1][test_idx]), cmap='gray'); axes[1].set_title("Input 2 (DREX)")
+axes[2].imshow(to_img(val_inputs[2][test_idx]), cmap='gray'); axes[2].set_title("Input 3 (KIT)")
+axes[3].imshow(to_img(val_inputs[3][test_idx]), cmap='gray'); axes[3].set_title("Input 4 (KTH)")
+axes[4].imshow(to_img(val_inputs[4][test_idx]), cmap='gray'); axes[4].set_title("Input 5 (MU)")
 
-# Plot Result
 axes[5].imshow(to_img(prediction_binary[0]), cmap='jet'); axes[5].set_title("DeepFuse Result")
+axes[6].imshow(to_img(val_gts[test_idx]), cmap='gray'); axes[6].set_title("Gold Truth")
 
-# Plot Ground Truth
-axes[6].imshow(to_img(target[test_idx]), cmap='gray'); axes[6].set_title("Gold Truth")
-
-# Remove axes ticks for cleanliness
 for ax in axes:
     ax.axis('off')
 
-# 6. Save to disk INSIDE the output folder
-viz_filename = f"vizualization_result_trained_on_{seq_id}.png"
+viz_filename = f"vizualization_result_{dataset_name}_fold{fold_num}.png"
 viz_save_path = os.path.join(output_folder, viz_filename)
 
 plt.savefig(viz_save_path, dpi=150)

@@ -2,41 +2,60 @@ import os
 import glob
 import argparse
 import sys
+from pathlib import Path
 import numpy as np
 import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Conv2D, add
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras import backend as K
-from create_mask_images import create_train_data
+from create_mask_images import create_multi_input_data_from_parquet
 from tensorflow.keras.layers import Input, concatenate, Conv2D, add
 
 
 # --- ARGUMENT PARSING ---
-parser = argparse.ArgumentParser(description='Evaluate DeepFuse on specific sequence')
-parser.add_argument('--seq', type=str, required=True, choices=['01', '02'], help='Which sequence, its ID (01 or 02), to test on')
-parser.add_argument('--model', type=str, default='debug', help='Which model to evaluate')
+parser = argparse.ArgumentParser(description='Evaluate DeepFuse on specific dataset fold')
+parser.add_argument('--dataset', type=str, required=True, choices=['BF-C2DL-HSC', 'BF-C2DL-MuSC'], help='Dataset name')
+parser.add_argument('--fold', type=int, required=True, choices=[1, 2], help='Cross-validation fold (1 or 2)')
+parser.add_argument('--model', type=str, required=True, help='Path to .h5 model file to evaluate')
 args = parser.parse_args()
 
-seq_id = args.seq
+dataset_name = args.dataset
+fold_num = args.fold
 model_path = args.model
 
 
 print(f"--- EVALUATING CONFIGURATION ---")
+print(f"Dataset: {dataset_name}")
+print(f"Fold: {fold_num}")
 print(f"Evaluating Model: {model_path}")
-print(f"Testing on: {seq_id}")
 # ------------------------
 
 
 # --- Configuration ---
-input_paths = [
-    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/CALT-US/{seq_id}_RES/',
-    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/DREX-US/{seq_id}_RES/',
-    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KIT-Sch-GE/{seq_id}_RES/',
-    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/KTH-SE (5)/{seq_id}_RES/',
-    f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/MU-Lux-CZ/{seq_id}_RES/'
-]
-gt_path = f'/home/osalamon/silver-truth/data/synchronized_data/BF-C2DL-HSC/{seq_id}_GT/SEG/'
+data_root = Path("data/synchronized_data") / dataset_name
+parquet_path = Path("data/dataframes") / dataset_name / "whole_image" / f"{dataset_name}_split_fold-{fold_num}.parquet"
+
+# Competitor input paths (5 raters)
+# Fold 1 uses sequence 01, Fold 2 uses sequence 02
+if fold_num == 1:
+    input_paths = [
+        str(data_root / f"CALT-US/01_RES/"),
+        str(data_root / f"DREX-US/01_RES/"),
+        str(data_root / f"KIT-Sch-GE/01_RES/"),
+        str(data_root / f"KTH-SE (5)/01_RES/"),
+        str(data_root / f"MU-Lux-CZ/01_RES/"),
+    ]
+    gt_path = str(data_root / "01_GT/SEG/")
+else:
+    input_paths = [
+        str(data_root / f"CALT-US/02_RES/"),
+        str(data_root / f"DREX-US/02_RES/"),
+        str(data_root / f"KIT-Sch-GE/02_RES/"),
+        str(data_root / f"KTH-SE (5)/02_RES/"),
+        str(data_root / f"MU-Lux-CZ/02_RES/"),
+    ]
+    gt_path = str(data_root / "02_GT/SEG/")
 
 # Determine output directory from model path so log is saved there
 output_dir = os.path.dirname(os.path.abspath(model_path)) 
@@ -55,7 +74,7 @@ class DualLogger(object):
         self.terminal.flush()
         self.log.flush()
 
-log_filename = os.path.join(output_dir, f"evaluation_results_on_{seq_id}.txt")
+log_filename = os.path.join(output_dir, f"evaluation_results_{dataset_name}_fold{fold_num}.txt")
 sys.stdout = DualLogger(log_filename)
 print(f"Saving evaluation log to: {log_filename}")
 
@@ -104,17 +123,6 @@ def build_model():
     input3 = Input(shape=(im_len, im_wid, 1))
     input4 = Input(shape=(im_len, im_wid, 1))
     input5 = Input(shape=(im_len, im_wid, 1))
-    # input6 = Input(shape=(im_len, im_wid, 1))
-    # input7 = Input(shape=(im_len, im_wid, 1))
-    # input8 = Input(shape=(im_len, im_wid, 1))
-    # input9 = Input(shape=(im_len, im_wid, 1))
-    # input10 = Input(shape=(im_len, im_wid, 1))
-    # input11 = Input(shape=(im_len, im_wid, 1))
-    # input12 = Input(shape=(im_len, im_wid, 1))
-    # input13 = Input(shape=(im_len, im_wid, 1))
-    # input14 = Input(shape=(im_len, im_wid, 1))
-    # input15 = Input(shape=(im_len, im_wid, 1))
-    # input16 = Input(shape=(im_len, im_wid, 1))
     # the first branch operates on the first input
     x1 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input1)
     x1 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x1)
@@ -140,80 +148,11 @@ def build_model():
     x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x5)
     x5 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x5)
     x5 = Model(inputs=input5, outputs=x5)
-    # # 
-    # x6 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input6)
-    # x6 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x6)
-    # x6 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x6)
-    # x6 = Model(inputs=input6, outputs=x6)
-    # # 
-    # x7 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input7)
-    # x7 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x7)
-    # x7 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x7)
-    # x7 = Model(inputs=input7, outputs=x7)
-    # # 
-    # x8 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input8)
-    # x8 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x8)
-    # x8 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x8)
-    # x8 = Model(inputs=input8, outputs=x8)
-    # # 
-    # x9 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input9)
-    # x9 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x9)
-    # x9 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x9)
-    # x9 = Model(inputs=input9, outputs=x9)
-    # # 
-    # x10 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input10)
-    # x10 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x10)
-    # x10 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x10)
-    # x10 = Model(inputs=input10, outputs=x10)
-    # # 
-    # x11 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input11)
-    # x11 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x11)
-    # x11 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x11)
-    # x11 = Model(inputs=input11, outputs=x11)
-    # # 
-    # x12 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input12)
-    # x12 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x12)
-    # x12 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x12)
-    # x12 = Model(inputs=input12, outputs=x12)
-    # #
-    # x13 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input13)
-    # x13 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x13)
-    # x13 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x13)
-    # x13 = Model(inputs=input13, outputs=x13)
-    # # 
-    # x14 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input14)
-    # x14 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x14)
-    # x14 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x14)
-    # x14 = Model(inputs=input14, outputs=x14)
-    # # 
-    # x15 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input15)
-    # x15 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x15)
-    # x15 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x15)
-    # x15 = Model(inputs=input15, outputs=x15)
-    # # 
-    # x16 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(input16)
-    # x16 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x16)
-    # x16 = Conv2D(num_of_filters, (5, 5), activation="relu", padding='same')(x16)
-    # x16 = Model(inputs=input16, outputs=x16)
     # combine the output of all branches
-    # combined = concatenate([x1.output, x2.output, x3.output, x4.output, x5.output, x6.output, x7.output, x8.output, x9.output, x10.output, x11.output, x12.output, x13.output, x14.output, x15.output, x16.output])
-    # combined = concatenate([x1.output, x2.output, x3.output, x4.output])
-    # print(f"DEBUG: x1={x1}, x2={x2}, x3={x3}, x4={x4}")
-    # merged = add([x1.output, x2.output, x3.output, x4.output, x5.output])
     combined = concatenate([x1.output, x2.output, x3.output, x4.output, x5.output])
 
     # feed the combined output to a non-linear activation function
-    # z = Conv2D(1, (1, 1), activation='sigmoid')(combined)
     output = Conv2D(1, (1,1), activation='sigmoid')(combined)
-
-    # our model will accept the inputs of 16 branches and then output a single value
-    # model = Model(inputs=[x1.input, x2.input, x3.input, x4.input, x5.input, x6.input, x7.input, x8.input, x9.input, x10.input, x11.input, x12.input, x13.input, x14.input, x15.input, x16.input], outputs=z)
-    # model = Model(inputs=[x1.input, x2.input, x3.input, x4.input], outputs=z)
-    # model = Model(inputs=[input1, input2, input3, input4], outputs=[output])
-
-    # Check that all lengths match
-
-
 
     model = Model(inputs=[x1.input, x2.input, x3.input, x4.input, x5.input], outputs=[output])
 
@@ -223,40 +162,15 @@ def build_model():
 
 # --- Main Evaluation Loop ---
 def main():
-    print("--- Loading Data ---")
+    print("--- Loading Test Data ---")
 
-    # FIX: Logic to handle multiple inputs vs single target
-    X_data_list = []
-    Y_ground_truth = None
-
-    for i, p in enumerate(input_paths):
-        print(f"Loading input branch {i+1} from: {p}")
-        data, gt = create_train_data(p, gt_path)
-
-        X_data_list.append(data)    
-    # print(f"Loading GT from: {gt_path}")
-    # Y_data = create_gt_data(gt_path)
-
-        if i == 0:
-            Y_ground_truth = gt
-        else:
-            # Optional: Safety check to ensure sample counts match
-            if gt.shape[0] != Y_ground_truth.shape[0]:
-                raise ValueError("Mismatch in number of samples between input folders!")
-
-
-    # Calculate split point for validation (last 20%)
-    total_samples = Y_ground_truth.shape[0]
-    split_idx = int(total_samples * 0.8)
+    # Load test split from parquet
+    test_inputs, test_gts = create_multi_input_data_from_parquet(
+        str(parquet_path), 'test', input_paths, gt_path
+    )
     
-    # Prepare lists for inputs
-    X_full = X_data_list
-    X_val = [x[split_idx:] for x in X_data_list]
-
-    Y_full = Y_ground_truth
-    Y_val = Y_ground_truth[split_idx:]
-    
-    print(f"Data Loaded. Total samples: {total_samples}, Validation samples: {len(Y_val)}")
+    total_samples = test_gts.shape[0]
+    print(f"Test samples loaded: {total_samples}")
 
     # Find model files
     model_files = glob.glob(os.path.join(model_path), recursive=True)
@@ -277,24 +191,16 @@ def main():
             # Load weights
             model.load_weights(m_path)
             print(f"Evaluating Model: {m_path}")
-            # --- Evaluate on Full Set ---
-            preds_full = model.predict(X_full, batch_size=batch_size, verbose=0)
+            
+            # --- Evaluate on Test Set ---
+            preds_test = model.predict(test_inputs, batch_size=batch_size, verbose=0)
             # Threshold predictions (binary classification)
-            preds_full_bin = (preds_full > 0.5).astype(np.float32)
+            preds_test_bin = (preds_test > 0.5).astype(np.float32)
             
-            f1_full = dice_coef_np(Y_full, preds_full_bin)
-            jac_full = jaccard_coef_np(Y_full, preds_full_bin)
+            f1_test = dice_coef_np(test_gts, preds_test_bin)
+            jac_test = jaccard_coef_np(test_gts, preds_test_bin)
             
-            print(f"{os.path.relpath(m_path, output_dir):<80} | {'FULL':<10} | {f1_full:.4f}     | {jac_full:.4f}")
-
-            # --- Evaluate on Validation Set ---
-            preds_val = model.predict(X_val, batch_size=batch_size, verbose=0)
-            preds_val_bin = (preds_val > 0.5).astype(np.float32)
-            
-            f1_val = dice_coef_np(Y_val, preds_val_bin)
-            jac_val = jaccard_coef_np(Y_val, preds_val_bin)
-            
-            print(f"{'':<80} | {'VAL (20%)':<10} | {f1_val:.4f}     | {jac_val:.4f}")
+            print(f"{os.path.relpath(m_path, output_dir):<80} | {'TEST':<10} | {f1_test:.4f}     | {jac_test:.4f}")
             print("-" * 120)
 
         except Exception as e:
@@ -302,4 +208,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

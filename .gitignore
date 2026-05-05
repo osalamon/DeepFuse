@@ -1,3 +1,5 @@
 CTC_training_results/
 gold_detection_truth/
 __pycache__/
+.aider*
+data/dataframes/
