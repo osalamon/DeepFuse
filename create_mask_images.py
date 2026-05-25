@@ -1,196 +1,248 @@
-import tifffile as tf
-import numpy as np
-import os
-import re
+import tifffile as tf                                                                                                                                                                                                                                                                     
+import numpy as np                                                                                                                                                                                                                                                                        
+import os                                                                                                                                                                                                                                                                                 
+import re                                                                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                          
+def create_train_data(input_path, gt_path, frame_ids=None):                                                                                                                                                                                                                               
+    """                                                                                                                                                                                                                                                                                   
+    Create training data from input and GT directories.                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                          
+    Args:                                                                                                                                                                                                                                                                                 
+        input_path: Path to input masks directory (e.g., CALT-US/01_RES/)                                                                                                                                                                                                                 
+        gt_path: Path to GT masks directory (e.g., 01_GT/SEG/)                                                                                                                                                                                                                            
+        frame_ids: Optional list of frame ID strings to process (e.g., ['0058', '0108']).                                                                                                                                                                                                 
+                   If None, process all available GT files.                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                          
+    Returns:                                                                                                                                                                                                                                                                              
+        input_mask_imgs: Array of input mask patches (N, H, W, 1)                                                                                                                                                                                                                         
+        gts_imgs: Array of GT mask patches (N, H, W, 1)                                                                                                                                                                                                                                   
+    """                                                                                                                                                                                                                                                                                   
+    # 1. Filter AND SORT valid TIF files                                                                                                                                                                                                                                                  
+    # CRITICAL: 'sorted' ensures that image 001 in Input1 corresponds to image 001 in Input2                                                                                                                                                                                              
+    valid_files = sorted([f for f in os.listdir(gt_path) if f.endswith(".tif")])                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                          
+    # If frame_ids specified, filter to only those files                                                                                                                                                                                                                                  
+    if frame_ids is not None:                                                                                                                                                                                                                                                             
+        frame_ids_set = set(str(fid) for fid in frame_ids)                                                                                                                                                                                                                                
+        valid_files = [f for f in valid_files                                                                                                                                                                                                                                             
+                       if any(f'man_seg{fid}.tif' == f for fid in frame_ids_set)]                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                          
+    num_files = len(valid_files)                                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                          
+    if num_files == 0:                                                                                                                                                                                                                                                                    
+        raise ValueError(f"No .tif files found in {gt_path}" +                                                                                                                                                                                                                            
+                        (f" matching frame_ids {frame_ids}" if frame_ids else ""))                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                          
+    # Read the first image to get the TRUE shape (for debug print)                                                                                                                                                                                                                        
+    first_image_path = os.path.join(gt_path, valid_files[0])                                                                                                                                                                                                                              
+    sample_img = tf.imread(first_image_path)                                                                                                                                                                                                                                              
+    true_shape = sample_img.shape                                                                                                                                                                                                                                                         
+    print(f"Detected image shape: {true_shape}")                                                                                                                                                                                                                                          
+    print(f"Processing {num_files} files" + (f" (filtered from {len(frame_ids)} frame IDs)" if frame_ids else ""))                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                          
+    # 2. init lists                                                                                                                                                                                                                                                                       
+    objects_subimages = []                                                                                                                                                                                                                                                                
+    objects_gts = []                                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                          
+    # 3. Define crop size                                                                                                                                                                                                                                                                 
+    crop_h, crop_w = 101, 101                                                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                                          
+    # 4. Outer loop: process each file/image                                                                                                                                                                                                                                              
+    print('Loading masks from ', input_path)                                                                                                                                                                                                                                              
+    for image_name in valid_files:  # Go through all the .tif files in the folder                                                                                                                                                                                                         
+        if image_name.endswith(".tif"):                                                                                                                                                                                                                                                   
+            # Extract the number safely (removes '.tif' first so we don't accidentally slice it)                                                                                                                                                                                          
+            image_id = image_name.split('man_seg')[1].split('.')[0]                                                                                                                                                                                                                       
+            # Construct the filename.                                                                                                                                                                                                                                                     
+            # I need 4 digits, i.e. 'mask0090.tif', use .zfill(4)                                                                                                                                                                                                                         
+            participant_image_name = 'mask' + image_id.zfill(4) + '.tif'                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                          
+            im_gt = tf.imread(os.path.join(gt_path, image_name))                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                          
+            # Handle missing competitor masks by zero-filling                                                                                                                                                                                                                             
+            participant_image_path = os.path.join(input_path, participant_image_name)                                                                                                                                                                                                     
+            if os.path.exists(participant_image_path):                                                                                                                                                                                                                                    
+                im_allmasks = tf.imread(participant_image_path)                                                                                                                                                                                                                           
+            else:                                                                                                                                                                                                                                                                         
+                im_allmasks = np.zeros(im_gt.shape, dtype=im_gt.dtype)                                                                                                                                                                                                                    
+                                                                                                                                                                                                                                                                                          
+            unique_objs = np.unique(im_gt)                                                                                                                                                                                                                                                
+            unique_objs = unique_objs[unique_objs != 0]     # Remove 0 (background) if present                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                          
+            # 5. Inner Loop: Iterate through unique object labels found within that file/image                                                                                                                                                                                            
+            for cur_label in unique_objs:                                                                                                                                                                                                                                                 
+                # 5.1 Create Input Mask (The rater's segmentation)                                                                                                                                                                                                                        
+                mask_im = np.zeros(im_gt.shape, dtype='float32')                                                                                                                                                                                                                          
+                mask_im[im_allmasks == cur_label] = 1.0                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                          
+                # 5.2. Create Target Mask (The Ground Truth for this specific object)                                                                                                                                                                                                     
+                gt_im = np.zeros(im_gt.shape, dtype=np.float32)                                                                                                                                                                                                                           
+                gt_im[im_gt == cur_label] = 1.0                                                                                                                                                                                                                                           
+                                                                                                                                                                                                                                                                                          
+                rows, cols = np.where(gt_im == 1.0)                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                          
+                if len(rows) == 0:                                                                                                                                                                                                                                                        
+                    continue                                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                          
+                # 6. Calculate the bounding box                                                                                                                                                                                                                                           
+                center_y = int(np.mean(rows))                                                                                                                                                                                                                                             
+                center_x = int(np.mean(cols))                                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                                          
+                # 7. Calculate crop start/end                                                                                                                                                                                                                                             
+                start_y = max(0, center_y - crop_h // 2)                                                                                                                                                                                                                                  
+                start_x = max(0, center_x - crop_w // 2)                                                                                                                                                                                                                                  
+                end_y = start_y + crop_h                                                                                                                                                                                                                                                  
+                end_x = start_x + crop_w                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                          
+                # 8. Check Bottom Edge (Y)                                                                                                                                                                                                                                                
+                if end_y > mask_im.shape[0]:                                                                                                                                                                                                                                              
+                    end_y = mask_im.shape[0]                                                                                                                                                                                                                                              
+                    start_y = end_y - crop_h                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                          
+                # 9. Check Right Edge (X)                                                                                                                                                                                                                                                 
+                if end_x > mask_im.shape[1]:                                                                                                                                                                                                                                              
+                    end_x = mask_im.shape[1]                                                                                                                                                                                                                                              
+                    start_x = end_x - crop_w                                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                          
+                # Perform the crop                                                                                                                                                                                                                                                        
+                crop_input = mask_im[start_y:end_y, start_x:end_x]                                                                                                                                                                                                                        
+                crop_gt = gt_im[start_y:end_y, start_x:end_x]                                                                                                                                                                                                                             
+                                                                                                                                                                                                                                                                                          
+                if crop_input.shape[0] != crop_h or crop_input.shape[1] != crop_w:                                                                                                                                                                                                        
+                    pad_y = crop_h - crop_input.shape[0]                                                                                                                                                                                                                                  
+                    pad_x = crop_w - crop_input.shape[1]                                                                                                                                                                                                                                  
+                    crop_input = np.pad(crop_input, ((0, pad_y), (0, pad_x)), mode='constant')                                                                                                                                                                                            
+                    crop_gt = np.pad(crop_gt, ((0, pad_y), (0, pad_x)), mode='constant')                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                          
+                objects_subimages.append(crop_input)                                                                                                                                                                                                                                      
+                objects_gts.append(crop_gt)                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                          
+    # Convert list to numpy array                                                                                                                                                                                                                                                         
+    if len(objects_subimages) == 0 or len(objects_gts) == 0:                                                                                                                                                                                                                              
+        raise ValueError("No objects found to process.")                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                          
+    input_mask_imgs = np.array(objects_subimages, dtype='float32')                                                                                                                                                                                                                        
+    gts_imgs = np.array(objects_gts, dtype='float32')                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                          
+    print(f"Created dataset with {input_mask_imgs.shape[0]} patches of size {crop_h}x{crop_w}")                                                                                                                                                                                           
+    input_mask_imgs = input_mask_imgs[..., np.newaxis]                                                                                                                                                                                                                                    
+    gts_imgs = gts_imgs[..., np.newaxis]                                                                                                                                                                                                                                                  
+                                                                                                                                                                                                                                                                                          
+    return input_mask_imgs, gts_imgs                                                                                                                                                                                                                                                      
+                                                                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                          
+def create_train_data_from_parquet(parquet_path, split, input_path, gt_path):                                                                                                                                                                                                             
+    """                                                                                                                                                                                                                                                                                   
+    Create training data for a specific split from a parquet file.                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                          
+    Reads the parquet split file, extracts frame IDs from the gt_mask_path column,                                                                                                                                                                                                        
+    and calls create_train_data with those frame IDs.                                                                                                                                                                                                                                     
+                                                                                                                                                                                                                                                                                          
+    Args:                                                                                                                                                                                                                                                                                 
+        parquet_path: Path to split parquet file (e.g., BF-C2DL-HSC_split_fold-1.parquet)                                                                                                                                                                                                 
+        split: Split name ('train', 'val', or 'test')                                                                                                                                                                                                                                     
+        input_path: Path to input masks directory (e.g., CALT-US/01_RES/)                                                                                                                                                                                                                 
+        gt_path: Path to GT masks directory (e.g., 01_GT/SEG/)                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                          
+    Returns:                                                                                                                                                                                                                                                                              
+        input_mask_imgs: Array of input mask patches (N, H, W, 1)                                                                                                                                                                                                                         
+        gts_imgs: Array of GT mask patches (N, H, W, 1)                                                                                                                                                                                                                                   
+    """                                                                                                                                                                                                                                                                                   
+    import pandas as pd                                                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                          
+    df = pd.read_parquet(parquet_path)                                                                                                                                                                                                                                                    
+    df_split = df[df['split'] == split]                                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                          
+    if len(df_split) == 0:                                                                                                                                                                                                                                                                
+        raise ValueError(f"No frames found for split '{split}' in {parquet_path}")                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                          
+    # Extract frame IDs from gt_mask_path                                                                                                                                                                                                                                                 
+    frame_ids = set()                                                                                                                                                                                                                                                                     
+    for gt_mask_path in df_split['gt_mask_path'].dropna():                                                                                                                                                                                                                                
+        basename = os.path.basename(gt_mask_path)                                                                                                                                                                                                                                         
+        match = re.search(r'man_seg(\d+)\.tif', basename)                                                                                                                                                                                                                                 
+        if match:                                                                                                                                                                                                                                                                         
+            frame_ids.add(match.group(1))                                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                          
+    if not frame_ids:                                                                                                                                                                                                                                                                     
+        raise ValueError(f"No valid GT masks found for split '{split}' in {parquet_path}")                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                          
+    print(f"Parquet {parquet_path}: found {len(df_split)} frames for split '{split}'")                                                                                                                                                                                                    
+    print(f"Extracted {len(frame_ids)} unique GT frame IDs")                                                                                                                                                                                                                              
+                                                                                                                                                                                                                                                                                          
+    return create_train_data(input_path, gt_path, frame_ids=sorted(frame_ids))                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                          
+def create_multi_input_data_from_parquet(parquet_path, split, input_paths, gt_path):                                                                                                                                                                                                      
+    """                                                                                                                                                                                                                                                                                   
+    Load data from multiple competitor inputs for a given split.                                                                                                                                                                                                                          
+                                                                                                                                                                                                                                                                                          
+    This is useful for fusion models that take multiple rater segmentations                                                                                                                                                                                                               
+    as input (e.g., DeepFuse with 5 competitors).                                                                                                                                                                                                                                         
+                                                                                                                                                                                                                                                                                          
+    Args:                                                                                                                                                                                                                                                                                 
+        parquet_path: Path to split parquet file                                                                                                                                                                                                                                          
+        split: Split name ('train', 'val', or 'test')                                                                                                                                                                                                                                     
+        input_paths: List of input mask directories (one per competitor)                                                                                                                                                                                                                  
+        gt_path: Path to GT masks directory                                                                                                                                                                                                                                               
+                                                                                                                                                                                                                                                                                          
+    Returns:                                                                                                                                                                                                                                                                              
+        inputs_list: List of input mask arrays, one per competitor                                                                                                                                                                                                                        
+        gts: GT mask array (shared across all inputs)                                                                                                                                                                                                                                     
+    """                                                                                                                                                                                                                                                                                   
+    import pandas as pd                                                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                          
+    df = pd.read_parquet(parquet_path)                                                                                                                                                                                                                                                    
+    df_split = df[df['split'] == split]                                                                                                                                                                                                                                                   
+                                                                                                                                                                                                                                                                                          
+    if len(df_split) == 0:                                                                                                                                                                                                                                                                
+        raise ValueError(f"No frames found for split '{split}' in {parquet_path}")                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                          
+    # Extract candidate frame IDs from GT                                                                                                                                                                                                                                                 
+    candidate_frame_ids = set()                                                                                                                                                                                                                                                           
+    for gt_mask_path in df_split['gt_mask_path'].dropna():                                                                                                                                                                                                                                
+        basename = os.path.basename(gt_mask_path)                                                                                                                                                                                                                                         
+        match = re.search(r'man_seg(\d+)\.tif', basename)                                                                                                                                                                                                                                 
+        if match:                                                                                                                                                                                                                                                                         
+            candidate_frame_ids.add(match.group(1))                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                          
+    if not candidate_frame_ids:                                                                                                                                                                                                                                                           
+        raise ValueError(f"No valid GT masks found for split '{split}' in {parquet_path}")                                                                                                                                                                                                
+                                                                                                                                                                                                                                                                                          
+    # Filter to frame IDs that exist in GT (competitors may be missing some)                                                                                                                                                                                                              
+    valid_frame_ids = []                                                                                                                                                                                                                                                                  
+    for fid in sorted(candidate_frame_ids):                                                                                                                                                                                                                                               
+        gt_file = os.path.join(gt_path, f"man_seg{fid}.tif")                                                                                                                                                                                                                              
+        if not os.path.exists(gt_file):                                                                                                                                                                                                                                                   
+            print(f"Warning: Missing GT mask {gt_file}, skipping frame {fid}.")                                                                                                                                                                                                           
+            continue                                                                                                                                                                                                                                                                      
+        valid_frame_ids.append(fid)                                                                                                                                                                                                                                                       
+                                                                                                                                                                                                                                                                                          
+    if not valid_frame_ids:                                                                                                                                                                                                                                                               
+        raise ValueError(                                                                                                                                                                                                                                                                 
+            f"No frames found with GT masks for split '{split}'\n"                                                                                                                                                                                                                        
+            f"Candidates: {len(candidate_frame_ids)}, GT path: {gt_path}"                                                                                                                                                                                                                 
+        )                                                                                                                                                                                                                                                                                 
+                                                                                                                                                                                                                                                                                          
+    # Report missing competitor masks per frame (informational)                                                                                                                                                                                                                           
+    missing_counts = {i: 0 for i in range(len(input_paths))}                                                                                                                                                                                                                              
+    for fid in valid_frame_ids:                                                                                                                                                                                                                                                           
+        for i, input_path in enumerate(input_paths):                                                                                                                                                                                                                                      
+            participant_file = os.path.join(input_path, f"mask{fid.zfill(4)}.tif")                                                                                                                                                                                                        
+            if not os.path.exists(participant_file):                                                                                                                                                                                                                                      
+                missing_counts[i] += 1                                                                                                                                                                                                                                                    
+    for i, count in missing_counts.items():                                                                                                                                                                                                                                               
+        if count > 0:                                                                                                                                                                                                                                                                     
+            print(f"  Competitor {i+1} ({os.path.basename(input_paths[i])}): missing {count}/{len(valid_frame_ids)} frames (will use zero masks)")                                                                                                                                        
+                                                                                                                                                                                                                                                                                          
+    inputs_list = []                                                                                                                                                                                                                                                                      
+    gts = None                                                                                                                                                                                                                                                                            
+                                                                                                                                                                                                                                                                                          
+    for i, input_path in enumerate(input_paths):                                                                                                                                                                                                                                          
+        print(f"\n--- Loading competitor {i+1}/{len(input_paths)}: {input_path} ---")                                                                                                                                                                                                     
+        inputs, gts = create_train_data(input_path, gt_path, frame_ids=valid_frame_ids)                                                                                                                                                                                                   
+        inputs_list.append(inputs)                                                                                                                                                                                                                                                        
+                                                                                                                                                                                                                                                                                          
+    return inputs_list, gts 
 
-
-def create_train_data(input_path, gt_path, frame_ids=None):
-    """
-    Create training data from input and GT directories.
-    
-    Args:
-        input_path: Path to input masks directory (e.g., CALT-US/01_RES/)
-        gt_path: Path to GT masks directory (e.g., 01_GT/SEG/)
-        frame_ids: Optional list of frame ID strings to process (e.g., ['0058', '0108']).
-                   If None, process all available GT files.
-    
-    Returns:
-        input_mask_imgs: Array of input mask patches (N, H, W, 1)
-        gts_imgs: Array of GT mask patches (N, H, W, 1)
-    """
-    # 1. Filter AND SORT valid TIF files
-    # CRITICAL: 'sorted' ensures that image 001 in Input1 corresponds to image 001 in Input2
-    valid_files = sorted([f for f in os.listdir(gt_path) if f.endswith(".tif")])
-    
-    # If frame_ids specified, filter to only those files
-    if frame_ids is not None:
-        frame_ids_set = set(str(fid) for fid in frame_ids)
-        valid_files = [f for f in valid_files 
-                       if any(f'man_seg{fid}.tif' == f for fid in frame_ids_set)]
-    
-    num_files = len(valid_files)
-
-    if num_files == 0:
-        raise ValueError(f"No .tif files found in {gt_path}" + 
-                        (f" matching frame_ids {frame_ids}" if frame_ids else ""))
-    
-    # Read the first image to get the TRUE shape (for debug print)
-    first_image_path = os.path.join(gt_path, valid_files[0])
-    sample_img = tf.imread(first_image_path)
-    true_shape = sample_img.shape 
-    print(f"Detected image shape: {true_shape}")
-    print(f"Processing {num_files} files" + (f" (filtered from {len(frame_ids)} frame IDs)" if frame_ids else ""))
-
-    # 2. init lists
-    objects_subimages = []
-    objects_gts = []
-
-    # 3. Define crop size
-    crop_h, crop_w = 101, 101 
-
-    # 4. Outer loop: process each file/image
-    print('Loading masks from ', input_path)
-    for image_name in valid_files:  # Go through all the .tif files in the folder
-        if image_name.endswith(".tif"):
-            # Extract the number safely (removes '.tif' first so we don't accidentally slice it)
-            image_id = image_name.split('man_seg')[1].split('.')[0]
-            # Construct the filename. 
-            # I need 4 digits, i.e. 'mask0090.tif', use .zfill(4)
-            participant_image_name = 'mask' + image_id.zfill(4) + '.tif'
-            
-            im_gt = tf.imread(os.path.join(gt_path, image_name))
-            im_allmasks = tf.imread(os.path.join(input_path, participant_image_name))
-            
-            unique_objs = np.unique(im_gt)
-            unique_objs = unique_objs[unique_objs != 0]     # Remove 0 (background) if present
-
-            # 5. Inner Loop: Iterate through unique object labels found within that file/image
-            for cur_label in unique_objs:
-                # 5.1 Create Input Mask (The rater's segmentation)
-                mask_im = np.zeros(im_gt.shape, dtype='float32')
-                mask_im[im_allmasks == cur_label] = 1.0
-                
-                # 5.2. Create Target Mask (The Ground Truth for this specific object)
-                gt_im = np.zeros(im_gt.shape, dtype=np.float32)
-                gt_im[im_gt == cur_label] = 1.0
-
-                rows, cols = np.where(gt_im == 1.0)
-
-                if len(rows) == 0:
-                    continue
-
-                # 6. Calculate the bounding box
-                center_y = int(np.mean(rows))
-                center_x = int(np.mean(cols))
-
-                # 7. Calculate crop start/end
-                start_y = max(0, center_y - crop_h // 2)
-                start_x = max(0, center_x - crop_w // 2)
-                end_y = start_y + crop_h
-                end_x = start_x + crop_w
-                
-                # 8. Check Bottom Edge (Y)
-                if end_y > mask_im.shape[0]:  
-                    end_y = mask_im.shape[0]
-                    start_y = end_y - crop_h
-
-                # 9. Check Right Edge (X) 
-                if end_x > mask_im.shape[1]: 
-                    end_x = mask_im.shape[1]
-                    start_x = end_x - crop_w
-                
-                # Perform the crop
-                crop_input = mask_im[start_y:end_y, start_x:end_x]
-                crop_gt = gt_im[start_y:end_y, start_x:end_x]
-
-                if crop_input.shape[0] != crop_h or crop_input.shape[1] != crop_w:
-                    pad_y = crop_h - crop_input.shape[0]
-                    pad_x = crop_w - crop_input.shape[1]
-                    crop_input = np.pad(crop_input, ((0, pad_y), (0, pad_x)), mode='constant')
-                    crop_gt = np.pad(crop_gt, ((0, pad_y), (0, pad_x)), mode='constant')
-                
-                objects_subimages.append(crop_input)
-                objects_gts.append(crop_gt)
-
-    # Convert list to numpy array
-    if len(objects_subimages) == 0 or len(objects_gts) == 0:
-        raise ValueError("No objects found to process.")
-    
-    input_mask_imgs = np.array(objects_subimages, dtype='float32')
-    gts_imgs = np.array(objects_gts, dtype='float32')
-
-    print(f"Created dataset with {input_mask_imgs.shape[0]} patches of size {crop_h}x{crop_w}")
-    input_mask_imgs = input_mask_imgs[..., np.newaxis]
-    gts_imgs = gts_imgs[..., np.newaxis]
-    
-    return input_mask_imgs, gts_imgs
-
-
-def create_train_data_from_parquet(parquet_path, split, input_path, gt_path):
-    """
-    Create training data for a specific split from a parquet file.
-    
-    Reads the parquet split file, extracts frame IDs from the gt_mask_path column,
-    and calls create_train_data with those frame IDs.
-    
-    Args:
-        parquet_path: Path to split parquet file (e.g., BF-C2DL-HSC_split_fold-1.parquet)
-        split: Split name ('train', 'val', or 'test')
-        input_path: Path to input masks directory (e.g., CALT-US/01_RES/)
-        gt_path: Path to GT masks directory (e.g., 01_GT/SEG/)
-    
-    Returns:
-        input_mask_imgs: Array of input mask patches (N, H, W, 1)
-        gts_imgs: Array of GT mask patches (N, H, W, 1)
-    """
-    import pandas as pd
-    
-    df = pd.read_parquet(parquet_path)
-    df_split = df[df['split'] == split]
-    
-    if len(df_split) == 0:
-        raise ValueError(f"No frames found for split '{split}' in {parquet_path}")
-    
-    # Extract frame IDs from gt_mask_path
-    frame_ids = set()
-    for gt_mask_path in df_split['gt_mask_path'].dropna():
-        basename = os.path.basename(gt_mask_path)
-        match = re.search(r'man_seg(\d+)\.tif', basename)
-        if match:
-            frame_ids.add(match.group(1))
-    
-    if not frame_ids:
-        raise ValueError(f"No valid GT masks found for split '{split}' in {parquet_path}")
-    
-    print(f"Parquet {parquet_path}: found {len(df_split)} frames for split '{split}'")
-    print(f"Extracted {len(frame_ids)} unique GT frame IDs")
-    
-    return create_train_data(input_path, gt_path, frame_ids=sorted(frame_ids))
-
-
-def create_multi_input_data_from_parquet(parquet_path, split, input_paths, gt_path):
-    """
-    Load data from multiple competitor inputs for a given split.
-    
-    This is useful for fusion models that take multiple rater segmentations
-    as input (e.g., DeepFuse with 5 competitors).
-    
-    Args:
-        parquet_path: Path to split parquet file
-        split: Split name ('train', 'val', or 'test')
-        input_paths: List of input mask directories (one per competitor)
-        gt_path: Path to GT masks directory
-    
-    Returns:
-        inputs_list: List of input mask arrays, one per competitor
-        gts: GT mask array (shared across all inputs)
-    """
-    inputs_list = []
-    gts = None
-    
-    for i, input_path in enumerate(input_paths):
-        print(f"\n--- Loading competitor {i+1}/{len(input_paths)}: {input_path} ---")
-        inputs, gts = create_train_data_from_parquet(parquet_path, split, input_path, gt_path)
-        inputs_list.append(inputs)
-    
-    return inputs_list, gts
