@@ -1,0 +1,169 @@
+Saving evaluation log to: /home/osalamon/DeepFuse/trained_on_BF-C2DL-MuSC_fold2_20260525_193323/evaluation_results_BF-C2DL-MuSC_fold2.txt
+--- Loading Test Data ---
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0061.tif, skipping frame 0061.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0074.tif, skipping frame 0074.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0086.tif, skipping frame 0086.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0138.tif, skipping frame 0138.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0140.tif, skipping frame 0140.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0157.tif, skipping frame 0157.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0162.tif, skipping frame 0162.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0183.tif, skipping frame 0183.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0205.tif, skipping frame 0205.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0228.tif, skipping frame 0228.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0234.tif, skipping frame 0234.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0266.tif, skipping frame 0266.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0346.tif, skipping frame 0346.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0415.tif, skipping frame 0415.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0456.tif, skipping frame 0456.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0459.tif, skipping frame 0459.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0460.tif, skipping frame 0460.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0464.tif, skipping frame 0464.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0502.tif, skipping frame 0502.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0548.tif, skipping frame 0548.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0597.tif, skipping frame 0597.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0619.tif, skipping frame 0619.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0650.tif, skipping frame 0650.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0740.tif, skipping frame 0740.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0750.tif, skipping frame 0750.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0781.tif, skipping frame 0781.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0807.tif, skipping frame 0807.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0815.tif, skipping frame 0815.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0900.tif, skipping frame 0900.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0902.tif, skipping frame 0902.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0911.tif, skipping frame 0911.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0934.tif, skipping frame 0934.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg0992.tif, skipping frame 0992.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1014.tif, skipping frame 1014.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1029.tif, skipping frame 1029.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1066.tif, skipping frame 1066.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1103.tif, skipping frame 1103.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1136.tif, skipping frame 1136.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1137.tif, skipping frame 1137.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1140.tif, skipping frame 1140.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1186.tif, skipping frame 1186.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1196.tif, skipping frame 1196.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1200.tif, skipping frame 1200.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1203.tif, skipping frame 1203.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1221.tif, skipping frame 1221.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1246.tif, skipping frame 1246.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1267.tif, skipping frame 1267.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1301.tif, skipping frame 1301.
+Warning: Missing GT mask data/synchronized_data/BF-C2DL-MuSC/02_GT/SEG/man_seg1322.tif, skipping frame 1322.
+  Competitor 2 (02_RES): missing 1/1 frames (will use zero masks)
+  Competitor 4 (02_RES): missing 1/1 frames (will use zero masks)
+
+--- Loading competitor 1/5: data/synchronized_data/BF-C2DL-MuSC/CALT-US/02_RES ---
+Detected image shape: (1036, 1070)
+Processing 1 files (filtered from 1 frame IDs)
+Loading masks from  data/synchronized_data/BF-C2DL-MuSC/CALT-US/02_RES
+Created dataset with 15 patches of size 101x101
+
+--- Loading competitor 2/5: data/synchronized_data/BF-C2DL-MuSC/DREX-US/02_RES ---
+Detected image shape: (1036, 1070)
+Processing 1 files (filtered from 1 frame IDs)
+Loading masks from  data/synchronized_data/BF-C2DL-MuSC/DREX-US/02_RES
+Created dataset with 15 patches of size 101x101
+
+--- Loading competitor 3/5: data/synchronized_data/BF-C2DL-MuSC/KIT-Sch-GE/02_RES ---
+Detected image shape: (1036, 1070)
+Processing 1 files (filtered from 1 frame IDs)
+Loading masks from  data/synchronized_data/BF-C2DL-MuSC/KIT-Sch-GE/02_RES
+Created dataset with 15 patches of size 101x101
+
+--- Loading competitor 4/5: data/synchronized_data/BF-C2DL-MuSC/KTH-SE (5)/02_RES ---
+Detected image shape: (1036, 1070)
+Processing 1 files (filtered from 1 frame IDs)
+Loading masks from  data/synchronized_data/BF-C2DL-MuSC/KTH-SE (5)/02_RES
+Created dataset with 15 patches of size 101x101
+
+--- Loading competitor 5/5: data/synchronized_data/BF-C2DL-MuSC/MU-Lux-CZ/02_RES ---
+Detected image shape: (1036, 1070)
+Processing 1 files (filtered from 1 frame IDs)
+Loading masks from  data/synchronized_data/BF-C2DL-MuSC/MU-Lux-CZ/02_RES
+Created dataset with 15 patches of size 101x101
+Test samples loaded: 15
+
+Found 1 models to evaluate.
+Model: "model_5"
+__________________________________________________________________________________________________
+ Layer (type)                   Output Shape         Param #     Connected to                     
+==================================================================================================
+ input_1 (InputLayer)           [(None, 101, 101, 1  0           []                               
+                                )]                                                                
+                                                                                                  
+ input_2 (InputLayer)           [(None, 101, 101, 1  0           []                               
+                                )]                                                                
+                                                                                                  
+ input_3 (InputLayer)           [(None, 101, 101, 1  0           []                               
+                                )]                                                                
+                                                                                                  
+ input_4 (InputLayer)           [(None, 101, 101, 1  0           []                               
+                                )]                                                                
+                                                                                                  
+ input_5 (InputLayer)           [(None, 101, 101, 1  0           []                               
+                                )]                                                                
+                                                                                                  
+ conv2d (Conv2D)                (None, 101, 101, 16  416         ['input_1[0][0]']                
+                                )                                                                 
+                                                                                                  
+ conv2d_3 (Conv2D)              (None, 101, 101, 16  416         ['input_2[0][0]']                
+                                )                                                                 
+                                                                                                  
+ conv2d_6 (Conv2D)              (None, 101, 101, 16  416         ['input_3[0][0]']                
+                                )                                                                 
+                                                                                                  
+ conv2d_9 (Conv2D)              (None, 101, 101, 16  416         ['input_4[0][0]']                
+                                )                                                                 
+                                                                                                  
+ conv2d_12 (Conv2D)             (None, 101, 101, 16  416         ['input_5[0][0]']                
+                                )                                                                 
+                                                                                                  
+ conv2d_1 (Conv2D)              (None, 101, 101, 16  6416        ['conv2d[0][0]']                 
+                                )                                                                 
+                                                                                                  
+ conv2d_4 (Conv2D)              (None, 101, 101, 16  6416        ['conv2d_3[0][0]']               
+                                )                                                                 
+                                                                                                  
+ conv2d_7 (Conv2D)              (None, 101, 101, 16  6416        ['conv2d_6[0][0]']               
+                                )                                                                 
+                                                                                                  
+ conv2d_10 (Conv2D)             (None, 101, 101, 16  6416        ['conv2d_9[0][0]']               
+                                )                                                                 
+                                                                                                  
+ conv2d_13 (Conv2D)             (None, 101, 101, 16  6416        ['conv2d_12[0][0]']              
+                                )                                                                 
+                                                                                                  
+ conv2d_2 (Conv2D)              (None, 101, 101, 16  6416        ['conv2d_1[0][0]']               
+                                )                                                                 
+                                                                                                  
+ conv2d_5 (Conv2D)              (None, 101, 101, 16  6416        ['conv2d_4[0][0]']               
+                                )                                                                 
+                                                                                                  
+ conv2d_8 (Conv2D)              (None, 101, 101, 16  6416        ['conv2d_7[0][0]']               
+                                )                                                                 
+                                                                                                  
+ conv2d_11 (Conv2D)             (None, 101, 101, 16  6416        ['conv2d_10[0][0]']              
+                                )                                                                 
+                                                                                                  
+ conv2d_14 (Conv2D)             (None, 101, 101, 16  6416        ['conv2d_13[0][0]']              
+                                )                                                                 
+                                                                                                  
+ concatenate (Concatenate)      (None, 101, 101, 80  0           ['conv2d_2[0][0]',               
+                                )                                 'conv2d_5[0][0]',               
+                                                                  'conv2d_8[0][0]',               
+                                                                  'conv2d_11[0][0]',              
+                                                                  'conv2d_14[0][0]']              
+                                                                                                  
+ conv2d_15 (Conv2D)             (None, 101, 101, 1)  81          ['concatenate[0][0]']            
+                                                                                                  
+==================================================================================================
+Total params: 66,321
+Trainable params: 66,321
+Non-trainable params: 0
+__________________________________________________________________________________________________
+
+Model Path                                                                       | Set        | F1 (Dice)  | Jaccard   
+------------------------------------------------------------------------------------------------------------------------
+Evaluating Model: trained_on_BF-C2DL-MuSC_fold2_20260525_193323/model_5x5_4e-04_100_16_BF-C2DL-MuSC_fold2.h5
+model_5x5_4e-04_100_16_BF-C2DL-MuSC_fold2.h5                                     | TEST       | 0.8918     | 0.8048
+------------------------------------------------------------------------------------------------------------------------

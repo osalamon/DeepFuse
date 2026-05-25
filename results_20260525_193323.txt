@@ -1,0 +1,19 @@
+DeepFuse Cross-Validation Results - 20260525_193323
+================================================
+
+BF-C2DL-HSC Fold 1:
+  F1 (Dice): 
+  Jaccard:   
+
+BF-C2DL-HSC Fold 2:
+  F1 (Dice): 
+  Jaccard:   
+
+BF-C2DL-MuSC Fold 1:
+  F1 (Dice): |
+  Jaccard:   |
+
+BF-C2DL-MuSC Fold 2:
+  F1 (Dice): |
+  Jaccard:   |
+
